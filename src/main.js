@@ -50,6 +50,27 @@ map.on('load', async () => {
     },
   }, labelLayer);
 
+  const localData = (name) => `${import.meta.env.BASE_URL}data/kifisia-${name}.geojson`;
+  map.addSource('land-cover', { type: 'geojson', data: localData('land-cover-2021'), attribution: 'Athens GIS · 2021 land cover' });
+  map.addLayer({
+    id: 'land-cover', type: 'fill', source: 'land-cover', layout: { visibility: layerVisibility('landuse-toggle') },
+    paint: { 'fill-color': ['match', ['get', 'class_2021'],
+      ['Forests', 'Green urban areas (Public access)', 'Green urban areas (Unknown access conditions)'], '#6e9e70',
+      ['Herbaceous vegetation associations (natural grassland, moors...)', 'Pastures'], '#a4b77f',
+      ['Sports and leisure facilities'], '#8eb5aa',
+      ['Industrial, commercial, public, military and private units'], '#b9a8a0',
+      ['Open spaces with little or no vegetation (beaches, dunes, bare rocks, glaciers)', 'Land without current use'], '#c8c4a6',
+      '#e5d0b4'], 'fill-opacity': 0.66, 'fill-outline-color': '#ffffff55' },
+  }, 'kifisia-buildings');
+
+  map.addSource('dsm', {
+    type: 'image', url: `${import.meta.env.BASE_URL}data/kifisia-dsm.png`,
+    coordinates: [[23.7677541, 38.1225421], [23.8844208, 38.1225421], [23.8844208, 38.0605977], [23.7677541, 38.0605977]],
+  });
+  map.addLayer({ id: 'dsm', type: 'raster', source: 'dsm', layout: { visibility: layerVisibility('dsm-toggle') }, paint: { 'raster-opacity': 0.67 } }, 'kifisia-buildings');
+  map.addSource('contours', { type: 'geojson', data: localData('contours'), attribution: 'Copernicus DEM GLO-30 · DSM, 20 m derived contours' });
+  map.addLayer({ id: 'contours', type: 'line', source: 'contours', layout: { visibility: layerVisibility('contours-toggle') }, paint: { 'line-color': '#5e5a46', 'line-width': 1.1, 'line-opacity': 0.72 } }, labelLayer);
+
   map.addSource('tree-cover', {
     type: 'image',
     url: `${import.meta.env.BASE_URL}data/kifisia-tree-cover.png`,
@@ -59,6 +80,33 @@ map.on('load', async () => {
     ],
   });
   map.addLayer({ id: 'tree-cover', type: 'raster', source: 'tree-cover', layout: { visibility: layerVisibility('trees-toggle') }, paint: { 'raster-opacity': 0.72 } }, 'kifisia-buildings');
+
+  for (const [name, toggle, type, paint] of [
+    ['parks', 'parks-toggle', 'fill', { 'fill-color': '#4d9868', 'fill-opacity': 0.46, 'fill-outline-color': '#25704d' }],
+    ['playgrounds', 'playgrounds-toggle', 'fill', { 'fill-color': '#dca953', 'fill-opacity': 0.75, 'fill-outline-color': '#a66a21' }],
+    ['arch-sites', 'heritage-toggle', 'fill', { 'fill-color': '#9b6b91', 'fill-opacity': 0.73, 'fill-outline-color': '#6f4267' }],
+    ['rivers', 'water-toggle', 'line', { 'line-color': '#348fbb', 'line-width': 3, 'line-opacity': 0.9 }],
+  ]) {
+    map.addSource(name, { type: 'geojson', data: localData(name), attribution: 'Athens GIS open data' });
+    map.addLayer({ id: name, type, source: name, layout: { visibility: layerVisibility(toggle) }, paint }, labelLayer);
+  }
+  for (const [name, toggle, color, radius] of [
+    ['civic-pois', 'civic-toggle', '#4d5e81', 5],
+    ['landmarks', 'landmarks-toggle', '#9b5471', 7],
+  ]) {
+    map.addSource(name, { type: 'geojson', data: localData(name), attribution: 'Athens GIS / OpenStreetMap contributors' });
+    map.addLayer({ id: name, type: 'circle', source: name, minzoom: 11,
+      layout: { visibility: layerVisibility(toggle) },
+      paint: { 'circle-color': color, 'circle-radius': radius, 'circle-stroke-color': '#fff', 'circle-stroke-width': 1.5 },
+    });
+  }
+
+  map.addLayer({
+    id: 'walking-paths', type: 'line', source: 'openmaptiles', 'source-layer': 'transportation',
+    filter: ['all', ['==', ['get', 'class'], 'path'], ['in', ['get', 'subclass'], ['literal', ['path', 'footway', 'steps', 'pedestrian']]]],
+    layout: { visibility: layerVisibility('walking-toggle'), 'line-cap': 'round' },
+    paint: { 'line-color': '#a46a3f', 'line-width': 2.6, 'line-dasharray': [2, 1.4] },
+  }, labelLayer);
 
   map.addLayer({
     id: 'main-roads', type: 'line', source: 'openmaptiles', 'source-layer': 'transportation',
@@ -140,10 +188,22 @@ function showSelection(title, detail, note) {
 }
 
 map.on('click', (event) => {
-  const layers = ['live-buses', 'bus-stops', 'cycleways-centre', 'kifisia-buildings'].filter((id) => map.getLayer(id));
+  const layers = ['landmarks', 'civic-pois', 'arch-sites', 'playgrounds', 'parks', 'rivers', 'contours', 'land-cover', 'live-buses', 'bus-stops', 'cycleways-centre', 'kifisia-buildings'].filter((id) => map.getLayer(id));
   const feature = map.queryRenderedFeatures(event.point, { layers })[0];
   if (!feature) return;
-  if (feature.layer.id === 'bus-stops') {
+  if (['landmarks', 'civic-pois'].includes(feature.layer.id)) {
+    showSelection(feature.properties.name, feature.properties.category, feature.layer.id === 'landmarks' ? 'Municipal attractions · coordinates from OpenStreetMap' : 'Athens GIS / OpenStreetMap · verify details at source');
+  } else if (feature.layer.id === 'arch-sites') {
+    showSelection(feature.properties.name || feature.properties.name_en || 'Mapped historic site', feature.properties.historic || 'Historic feature', 'Athens GIS archaeological-sites layer');
+  } else if (['parks', 'playgrounds'].includes(feature.layer.id)) {
+    showSelection(feature.properties.name || (feature.layer.id === 'parks' ? 'Mapped park' : 'Mapped playground'), feature.layer.id === 'parks' ? 'Park or public green space' : 'Playground', 'Athens GIS open data · mapped extent may be incomplete');
+  } else if (feature.layer.id === 'rivers') {
+    showSelection('Mapped watercourse', feature.properties.name_en || 'Kifisos tributary', 'Athens GIS stream network · line does not describe flood risk');
+  } else if (feature.layer.id === 'contours') {
+    showSelection(`${feature.properties.elevation_m} m surface contour`, '20 m interval · derived from Copernicus 30 m DSM', 'Surface elevation includes canopy and buildings');
+  } else if (feature.layer.id === 'land-cover') {
+    showSelection(feature.properties.class_2021, '2021 land cover and land use', 'Athens GIS · mapped class, not parcel zoning');
+  } else if (feature.layer.id === 'bus-stops') {
     showSelection(feature.properties.name || 'Bus stop', `Routes: ${feature.properties.route_ref || 'Not listed'}`, 'OASA stops via Athens GIS · published 21 Oct 2026');
   } else if (feature.layer.id === 'live-buses') {
     const time = new Date(Number(feature.properties.position_at) * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
@@ -181,6 +241,10 @@ document.querySelector('#boundary-toggle').addEventListener('change', (event) =>
 for (const [input, layers] of [
   ['trees-toggle', ['tree-cover']], ['roads-toggle', ['main-roads']],
   ['bike-toggle', ['cycleways', 'cycleways-centre']], ['stops-toggle', ['bus-stops']],
+  ['landuse-toggle', ['land-cover']], ['dsm-toggle', ['dsm']], ['contours-toggle', ['contours']],
+  ['parks-toggle', ['parks']], ['playgrounds-toggle', ['playgrounds']], ['heritage-toggle', ['arch-sites']],
+  ['water-toggle', ['rivers']], ['civic-toggle', ['civic-pois']], ['landmarks-toggle', ['landmarks']],
+  ['walking-toggle', ['walking-paths']],
 ]) {
   document.querySelector(`#${input}`).addEventListener('change', (event) => {
     for (const layer of layers) if (map.getLayer(layer)) map.setLayoutProperty(layer, 'visibility', event.target.checked ? 'visible' : 'none');

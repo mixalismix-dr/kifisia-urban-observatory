@@ -29,7 +29,7 @@ h2 { font-size: 13px; letter-spacing: .01em; margin: 0; font-weight: 700; }
 .place b { font-size: 14px; margin-left: 3px; font-weight: 400; }
 .place:hover, .place.is-active { background: #e2eadc; }
 .place.is-active { box-shadow: inset 3px 0 #497358; }
-.layer { display: flex; align-items: center; justify-content: space-between; padding: 9px 2px; font-size: 12px; cursor: pointer; }
+.layer { position: relative; display: flex; align-items: center; justify-content: space-between; padding: 9px 2px; font-size: 12px; cursor: pointer; }
 .layer > span:first-child { display: flex; align-items: center; gap: 9px; }
 .swatch { width: 11px; height: 11px; display: inline-block; }
 .swatch--built { background: #d0a681; }
@@ -39,6 +39,19 @@ h2 { font-size: 13px; letter-spacing: .01em; margin: 0; font-weight: 700; }
 .swatch--bike { background: #198e94; height: 3px; }
 .swatch--stops { background: #f5f5ee; border: 2px solid #214e74; border-radius: 50%; }
 .swatch--buses { background: #214e74; border-radius: 50%; }
+.swatch--parks { background: #4d9868; }
+.swatch--water { background: #348fbb; height: 3px; }
+.swatch--walking { border-top: 3px dashed #a46a3f; height: 3px; }
+.swatch--landuse { background: linear-gradient(135deg, #6e9e70 50%, #e5d0b4 50%); }
+.swatch--dsm { background: linear-gradient(135deg, #e2ddb8, #387263); }
+.swatch--contours { border-top: 2px solid #5e5a46; height: 2px; }
+.swatch--landmarks { background: #9b5471; border-radius: 50%; }
+.swatch--heritage { background: #9b6b91; }
+.swatch--playgrounds { background: #dca953; }
+.swatch--civic { background: #4d5e81; border-radius: 50%; }
+.layer-group { border-top: 1px solid #d4d8cb; margin-top: 12px; padding-top: 9px; }
+.layer-group summary { cursor: pointer; color: #365744; font-size: 11px; font-weight: 700; letter-spacing: .03em; padding: 5px 2px 7px; }
+.layer-group summary:focus-visible { outline: 2px solid #183e2b; outline-offset: 2px; }
 .layer small { font: 10px 'DM Mono', monospace; color: #78907e; }
 .layer-note { margin: 0 0 7px 20px; color: #788779; font: 10px/1.5 'DM Mono', monospace; }
 .density-key { display: flex; align-items: center; gap: 6px; margin: 0 2px 9px 20px; color: #788779; font: 9px 'DM Mono', monospace; }

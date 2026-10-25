@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#1c2924" />
-    <meta name="description" content="A 3D open-data map of Kifisia with tree cover, transit and municipal sources." />
+    <meta name="description" content="A 3D open-data map of Kifisia with landscape, terrain, heritage, transport and municipal sources." />
     <title>Kifisia · Urban Observatory</title>
   </head>
   <body>
@@ -21,7 +21,7 @@
         <div class="sidebar__body">
           <div class="edition">OPEN DATA ATLAS <span>25 OCT 2026</span></div>
           <p class="intro">Read the shape of the city.</p>
-          <p class="description">Explore the municipality through mapped buildings, tree cover and transport data. Each layer names its source and date.</p>
+          <p class="description">Explore buildings, landscape, water, places and transport across Kifisia. Each layer names its source and date.</p>
 
           <section class="section" aria-labelledby="district-heading">
             <div class="section__head"><span>01</span><h2 id="district-heading">Explore a district</h2></div>
@@ -46,13 +46,39 @@
             <p class="layer-note">OASA via Athens GIS · published 21 Oct 2026</p>
             <label class="layer"><span><i class="swatch swatch--buses"></i>Live buses</span><input id="buses-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
             <p class="layer-note" id="bus-feed-status">Community OASA feed · switch on to load positions</p>
+            <details class="layer-group" open>
+              <summary>Landscape &amp; water</summary>
+              <label class="layer"><span><i class="swatch swatch--parks"></i>Parks &amp; groves <small>118</small></span><input id="parks-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+              <label class="layer"><span><i class="swatch swatch--water"></i>Rivers &amp; streams <small>11</small></span><input id="water-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+              <label class="layer"><span><i class="swatch swatch--walking"></i>Mapped walking paths</span><input id="walking-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+              <p class="layer-note">OSM paths across the map. Check access and conditions before walking.</p>
+              <label class="layer"><span><i class="swatch swatch--landuse"></i>Land cover &amp; use</span><input id="landuse-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+              <p class="layer-note">Athens GIS · 2021 · green vegetation, tan urban, gray industry. Select a polygon for its class. Not zoning.</p>
+              <label class="layer"><span><i class="swatch swatch--dsm"></i>Surface elevation</span><input id="dsm-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+              <label class="layer"><span><i class="swatch swatch--contours"></i>20 m contours</span><input id="contours-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+              <p class="layer-note">Copernicus GLO-30 DSM · 30 m pixels · 2021 release · pale low to dark high. Includes buildings and trees. Bare-earth DTM unavailable.</p>
+            </details>
+            <details class="layer-group" open>
+              <summary>Places &amp; heritage</summary>
+              <label class="layer"><span><i class="swatch swatch--landmarks"></i>Local landmarks <small>3</small></span><input id="landmarks-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+              <label class="layer"><span><i class="swatch swatch--heritage"></i>Historic sites <small>5</small></span><input id="heritage-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+              <label class="layer"><span><i class="swatch swatch--playgrounds"></i>Playgrounds <small>21</small></span><input id="playgrounds-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+              <label class="layer"><span><i class="swatch swatch--civic"></i>Schools &amp; services <small>80</small></span><input id="civic-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+              <p class="layer-note">Athens GIS / OSM snapshot · 25 Oct 2026. Select a feature for details.</p>
+            </details>
           </section>
 
           <section class="section" aria-labelledby="local-heading">
             <div class="section__head"><span>03</span><h2 id="local-heading">Municipal &amp; traffic maps</h2></div>
             <div class="source-links">
               <a href="https://kifissia.gr/erga_map/" target="_blank" rel="noopener noreferrer">Municipal works map <span>↗</span></a>
+              <a href="https://kifissia.gr/paidikes-chares-choroi-athlisis/" target="_blank" rel="noopener noreferrer">Municipal playgrounds &amp; sports map <span>↗</span></a>
+              <a href="https://kifissia.gr/axiotheata/" target="_blank" rel="noopener noreferrer">Municipal attractions <span>↗</span></a>
+              <a href="https://kifissia.gr/politiki-prostasia/" target="_blank" rel="noopener noreferrer">Civil protection sector map <span>↗</span></a>
+              <a href="https://apdattikis.maps.arcgis.com/apps/webappviewer/index.html?id=810df919232347fc9329e734d5fac660" target="_blank" rel="noopener noreferrer">Official Attica flood &amp; water map <span>↗</span></a>
               <a href="https://kifissia.gr/diakopes-kykloforias-oligoora-kleisimata-dromon/" target="_blank" rel="noopener noreferrer">Road closures · updated daily <span>↗</span></a>
+              <a href="https://www.wikiloc.com/trails/hiking/greece/attica/kifisia" target="_blank" rel="noopener noreferrer">Wikiloc hikes near Kifisia <span>↗</span></a>
+              <a href="https://old.kifissia.gr/sites/default/files/arxia/%CE%9C%CE%99%CE%9A%CE%A1%CE%8C%20%CE%9F%CE%94%CE%9F%CE%99%CE%A0%CE%9F%CE%A1%CE%99%CE%9A%CE%9F%20%CE%A3%CE%A4%CE%9F%20%CE%9A%CE%A4%CE%97%CE%9C%CE%91%20%CE%A3%CE%A5%CE%93%CE%93%CE%A1%CE%9F%CE%A5_2.pdf" target="_blank" rel="noopener noreferrer">Syngrou Estate walk · municipality <span>↗</span></a>
               <a href="https://www.astynomia.gr/kykloforia-stous-dromous/deltio-kykloforias-attiki/" target="_blank" rel="noopener noreferrer">Attica traffic police bulletin <span>↗</span></a>
               <a href="https://www.google.com/maps/@38.0736082,23.8082244,13z/data=!5m1!1e1" target="_blank" rel="noopener noreferrer">Live road traffic · Google Maps <span>↗</span></a>
               <a href="https://kifissia.gr/diakopi-kykloforias-logo-ergasion-episkevis-ston-podilatodromo-stin-odo-ethn-stratou-tis-kifisias/" target="_blank" rel="noopener noreferrer">Municipal cycleway works <span>↗</span></a>
@@ -63,7 +89,7 @@
 
           <section class="section selection" aria-live="polite" aria-labelledby="selection-heading">
             <div class="section__head"><span>04</span><h2 id="selection-heading">Inspect</h2></div>
-            <div id="selection-content"><p class="selection__empty">Select a building, bus stop or live bus to see its mapped details.</p></div>
+            <div id="selection-content"><p class="selection__empty">Select a mapped feature to see its details and source.</p></div>
           </section>
         </div>
 
