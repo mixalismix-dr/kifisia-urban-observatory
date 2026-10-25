@@ -13,6 +13,7 @@ const places = {
 
 const status = document.querySelector('#map-status');
 const selection = document.querySelector('#selection-content');
+const layerVisibility = (toggle) => document.querySelector(`#${toggle}`).checked ? 'visible' : 'none';
 const map = new maplibregl.Map({
   container: 'map',
   style: 'https://tiles.openfreemap.org/styles/positron',
@@ -40,6 +41,7 @@ map.on('load', async () => {
     'source-layer': 'building',
     filter: ['!=', ['get', 'hide_3d'], true],
     minzoom: 13,
+    layout: { visibility: layerVisibility('buildings-toggle') },
     paint: {
       'fill-extrusion-color': '#d0a681',
       'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 0],
@@ -51,47 +53,47 @@ map.on('load', async () => {
   map.addSource('tree-cover', {
     type: 'image',
     url: `${import.meta.env.BASE_URL}data/kifisia-tree-cover.png`,
-    attribution: '<a href="https://land.copernicus.eu/">Copernicus Land Monitoring Service</a> · 2024, via Athens GIS',
     coordinates: [
       [23.7677541, 38.1225421], [23.8844901, 38.1225421],
       [23.8844901, 38.0604421], [23.7677541, 38.0604421],
     ],
   });
-  map.addLayer({ id: 'tree-cover', type: 'raster', source: 'tree-cover', layout: { visibility: 'none' }, paint: { 'raster-opacity': 0.72 } }, 'kifisia-buildings');
+  map.addLayer({ id: 'tree-cover', type: 'raster', source: 'tree-cover', layout: { visibility: layerVisibility('trees-toggle') }, paint: { 'raster-opacity': 0.72 } }, 'kifisia-buildings');
 
   map.addLayer({
     id: 'main-roads', type: 'line', source: 'openmaptiles', 'source-layer': 'transportation',
     filter: ['in', ['get', 'class'], ['literal', ['trunk', 'primary', 'secondary', 'tertiary']]],
-    layout: { visibility: 'none', 'line-cap': 'round', 'line-join': 'round' },
+    layout: { visibility: layerVisibility('roads-toggle'), 'line-cap': 'round', 'line-join': 'round' },
     paint: { 'line-color': '#b06334', 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 1.5, 16, 4], 'line-opacity': 0.84 },
   }, labelLayer);
   map.addLayer({
     id: 'cycleways', type: 'line', source: 'openmaptiles', 'source-layer': 'transportation',
     filter: ['all', ['==', ['get', 'class'], 'path'], ['==', ['get', 'subclass'], 'cycleway']],
-    layout: { visibility: 'none', 'line-cap': 'round' },
+    layout: { visibility: layerVisibility('bike-toggle'), 'line-cap': 'round' },
     paint: { 'line-color': '#198e94', 'line-width': 4, 'line-dasharray': [2, 1] },
   }, labelLayer);
   map.addSource('cycleways-centre', { type: 'geojson', data: `${import.meta.env.BASE_URL}data/kifisia-cycleways-centre.geojson`, attribution: '© OpenStreetMap contributors' });
   map.addLayer({
-    id: 'cycleways-centre', type: 'line', source: 'cycleways-centre', layout: { visibility: 'none', 'line-cap': 'round' },
+    id: 'cycleways-centre', type: 'line', source: 'cycleways-centre', layout: { visibility: layerVisibility('bike-toggle'), 'line-cap': 'round' },
     paint: { 'line-color': '#198e94', 'line-width': 4, 'line-dasharray': [2, 1] },
   }, labelLayer);
 
   map.addSource('bus-stops', { type: 'geojson', data: `${import.meta.env.BASE_URL}data/kifisia-bus-stops.geojson`, attribution: 'OASA stops via Athens GIS' });
   map.addLayer({
     id: 'bus-stops', type: 'circle', source: 'bus-stops', minzoom: 12,
-    layout: { visibility: 'none' },
+    layout: { visibility: layerVisibility('stops-toggle') },
     paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 3, 16, 6], 'circle-color': '#f5f5ee', 'circle-stroke-color': '#214e74', 'circle-stroke-width': 2 },
   });
   map.addSource('live-buses', { type: 'geojson', data: { type: 'FeatureCollection', features: [] }, attribution: 'OASA telematics via community feed' });
   map.addLayer({
-    id: 'live-buses', type: 'circle', source: 'live-buses', layout: { visibility: 'none' },
+    id: 'live-buses', type: 'circle', source: 'live-buses', layout: { visibility: layerVisibility('buses-toggle') },
     paint: { 'circle-radius': 8, 'circle-color': '#214e74', 'circle-stroke-color': '#fff', 'circle-stroke-width': 2 },
   });
   map.addLayer({
-    id: 'live-bus-labels', type: 'symbol', source: 'live-buses', layout: { visibility: 'none', 'text-field': ['get', 'line'], 'text-size': 11, 'text-offset': [0, -1.5] },
+    id: 'live-bus-labels', type: 'symbol', source: 'live-buses', layout: { visibility: layerVisibility('buses-toggle'), 'text-field': ['get', 'line'], 'text-size': 11, 'text-offset': [0, -1.5] },
     paint: { 'text-color': '#173a56', 'text-halo-color': '#fff', 'text-halo-width': 1.5 },
   });
+  if (document.querySelector('#buses-toggle').checked) refreshBuses();
 
   try {
     const response = await fetch(`${import.meta.env.BASE_URL}data/kifisia-boundary.geojson`);
@@ -101,10 +103,12 @@ map.on('load', async () => {
     map.addSource('municipality', { type: 'geojson', data: boundary });
     map.addLayer({
       id: 'municipality-halo', type: 'line', source: 'municipality',
+      layout: { visibility: layerVisibility('boundary-toggle') },
       paint: { 'line-color': '#fff9e9', 'line-width': 5, 'line-opacity': 0.9 },
     });
     map.addLayer({
       id: 'municipality-line', type: 'line', source: 'municipality',
+      layout: { visibility: layerVisibility('boundary-toggle') },
       paint: { 'line-color': '#254d3d', 'line-width': 2.2, 'line-dasharray': [3, 2] },
     });
     status.textContent = 'Kifisia municipality · open data';
