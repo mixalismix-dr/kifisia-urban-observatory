@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#1c2924" />
+    <meta name="description" content="An open-data 3D atlas of Kifisia, Nea Erythraia and Ekali." />
+    <title>Kifisia · Urban Observatory</title>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar" aria-label="Map guide">
+        <header class="identity">
+          <div class="identity__mark" aria-hidden="true">Κ</div>
+          <div>
+            <div class="eyebrow">Attica · Greece</div>
+            <h1>Kifisia<span>Urban Observatory</span></h1>
+          </div>
+        </header>
+
+        <div class="sidebar__body">
+          <div class="edition">OPEN DATA ATLAS <span>01 / 2026</span></div>
+          <p class="intro">Read the shape of the city.</p>
+          <p class="description">A focused 3D view of Kifisia municipality: its built form, municipal extent and three constituent districts.</p>
+
+          <section class="section" aria-labelledby="district-heading">
+            <div class="section__head"><span>01</span><h2 id="district-heading">Explore a district</h2></div>
+            <div class="places" role="group" aria-label="Map locations">
+              <button class="place is-active" data-place="kifisia" type="button"><span>Κηφισιά</span><span>Kifisia <b aria-hidden="true">↗</b></span></button>
+              <button class="place" data-place="nea-erythraia" type="button"><span>Νέα Ερυθραία</span><span>Nea Erythraia <b aria-hidden="true">↗</b></span></button>
+              <button class="place" data-place="ekali" type="button"><span>Εκάλη</span><span>Ekali <b aria-hidden="true">↗</b></span></button>
+            </div>
+          </section>
+
+          <section class="section" aria-labelledby="layers-heading">
+            <div class="section__head"><span>02</span><h2 id="layers-heading">Map layers</h2></div>
+            <label class="layer"><span><i class="swatch swatch--built"></i>3D buildings</span><input id="buildings-toggle" type="checkbox" checked /><span class="switch" aria-hidden="true"></span></label>
+            <label class="layer"><span><i class="swatch swatch--boundary"></i>Municipal boundary</span><input id="boundary-toggle" type="checkbox" checked /><span class="switch" aria-hidden="true"></span></label>
+          </section>
+
+          <section class="section selection" aria-live="polite" aria-labelledby="selection-heading">
+            <div class="section__head"><span>03</span><h2 id="selection-heading">Inspect</h2></div>
+            <div id="selection-content"><p class="selection__empty">Select a building on the map to inspect the height carried by the map data.</p></div>
+          </section>
+        </div>
+
+        <footer class="sidebar__footer">
+          <a href="https://www.openstreetmap.org/relation/2080716" target="_blank" rel="noopener noreferrer">Boundary: OpenStreetMap ↗</a>
+          <a href="https://openfreemap.org/" target="_blank" rel="noopener noreferrer">Buildings: OpenFreeMap ↗</a>
+          <span>Building heights are generalized map data, not survey measurements.</span>
+        </footer>
+      </aside>
+
+      <main class="map-stage">
+        <div id="map" role="region" aria-label="Interactive 3D map of Kifisia"></div>
+        <div class="map-title" aria-hidden="true"><span>38° 04′ N · 23° 48′ E</span><strong>ΚΗΦΙΣΙΑ</strong></div>
+        <div class="map-status" id="map-status" role="status">Loading map…</div>
+        <button class="reset-view" id="reset-view" type="button" aria-label="Show the whole municipality">↗ <span>Whole municipality</span></button>
+        <div class="map-legend" aria-label="Map legend"><span><i class="legend-key legend-key--green"></i>Green space · base map</span><span><i class="legend-key legend-key--line"></i>Municipal boundary</span></div>
+      </main>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
