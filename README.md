@@ -2,6 +2,8 @@
 
 A small open-data 3D atlas of **Kifisia municipality**, including Kifisia, Nea Erythraia and Ekali. The first release lets you inspect the city's building massing and municipal extent. It is a deliberately narrow base for future geospatial analysis.
 
+**[Open the live map](https://mixalismix-dr.github.io/kifisia-urban-observatory/)**
+
 ## Run locally
 
 Requires Node.js 20.19+.
