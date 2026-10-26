@@ -17,12 +17,21 @@ for (const [file, geometry] of [
   ['kifisia-land-cover-2021.geojson', ['Polygon', 'MultiPolygon']],
   ['kifisia-civic-pois.geojson', 'Point'],
   ['kifisia-landmarks.geojson', 'Point'],
+  ['kifisia-canopy-forms.geojson', 'Point'],
 ]) {
   const data = JSON.parse(readFileSync(new URL(`../public/data/${file}`, import.meta.url), 'utf8'));
   assert.equal(data.type, 'FeatureCollection');
   assert.ok(data.features.length > 0, `${file} has no features`);
   assert.ok(data.features.every((feature) => feature.geometry && [geometry].flat().includes(feature.geometry.type)), `${file} has unexpected geometry`);
 }
+
+const canopy = JSON.parse(readFileSync(new URL('../public/data/kifisia-canopy-forms.geojson', import.meta.url), 'utf8'));
+assert.ok(canopy.features.length > 1000);
+assert.ok(canopy.features.every(({ geometry, properties }) =>
+  geometry.coordinates[0] > 23.76 && geometry.coordinates[0] < 23.89 &&
+  geometry.coordinates[1] > 38.05 && geometry.coordinates[1] < 38.13 &&
+  properties.height_m >= 5 && properties.height_m <= 30 &&
+  properties.crown_radius_m >= 2 && properties.crown_radius_m <= 8));
 
 for (const file of ['data/kifisia-tree-cover.png', 'data/kifisia-dsm.png', 'bus-3d.png']) {
   const png = readFileSync(new URL(`../public/${file}`, import.meta.url));

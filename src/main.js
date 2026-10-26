@@ -1,5 +1,6 @@
 import * as maplibregl from 'maplibre-gl';
 import { createBusLayer } from './bus-layer.js';
+import { createGreeneryLayer } from './greenery-layer.js';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';
@@ -16,6 +17,7 @@ const localBounds = [[23.71, 38.02], [23.94, 38.16]];
 const status = document.querySelector('#map-status');
 const selection = document.querySelector('#selection-content');
 let busModelLayer;
+let greeneryLayer;
 const emptyFeatures = () => ({ type: 'FeatureCollection', features: [] });
 const layerVisibility = (toggle) => document.querySelector(`#${toggle}`).checked ? 'visible' : 'none';
 const map = new maplibregl.Map({
@@ -259,6 +261,8 @@ map.on('load', async () => {
   }, 'live-bus-labels');
   if (document.querySelector('#buses-toggle').checked) refreshBuses();
 
+  void loadGreenery();
+
   try {
     const response = await fetch(`${import.meta.env.BASE_URL}data/kifisia-boundary.geojson`);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -293,6 +297,27 @@ map.on('load', async () => {
 map.on('error', (event) => {
   if (event.error) status.textContent = `Map data unavailable: ${event.error.message}`;
 });
+
+async function loadGreenery() {
+  const label = document.querySelector('#greenery-status');
+  try {
+    const response = await fetch(`${import.meta.env.BASE_URL}data/kifisia-canopy-forms.geojson`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    if (!data.features?.length) throw new Error('No canopy forms in dataset');
+    map.addSource('canopy-forms', { type: 'geojson', data, attribution: 'Meta / WRI CHMv2 · CC BY 4.0; Copernicus Tree Cover Density 2024' });
+    greeneryLayer = createGreeneryLayer(map, data.features);
+    map.addLayer(greeneryLayer, 'kifisia-buildings');
+    map.addLayer({ id: 'canopy-forms-hit', type: 'circle', source: 'canopy-forms', minzoom: 14,
+      layout: { visibility: layerVisibility('greenery-toggle') },
+      paint: { 'circle-radius': 10, 'circle-opacity': 0.01, 'circle-stroke-opacity': 0 },
+    });
+    greeneryLayer.visible = document.querySelector('#greenery-toggle').checked;
+    label.textContent = 'Meta/WRI CHMv2 · 2019 local imagery · Copernicus cover 2024 · representative forms, approximate heights · zoom in';
+  } catch (error) {
+    label.textContent = `3D greenery unavailable: ${error.message}`;
+  }
+}
 
 function selectionDetails(title, detail, note) {
   const content = document.createElement('div');
@@ -525,7 +550,7 @@ map.on('click', (event) => {
   buildingPopup?.remove();
   clearBusSelection();
   railPopup?.remove();
-  const layers = ['live-bus-hit', 'live-bus-labels', 'live-bus-icon', 'live-buses', 'municipal-closures-points', 'municipal-works-points', 'municipal-works-lines', 'metro-stations', 'landmarks', 'civic-pois', 'sports', 'building-types', 'arch-sites', 'playgrounds', 'parks', 'rivers', 'flood-100', 'contours', 'land-cover', 'bus-stops', 'cycleways-centre', 'kifisia-buildings'].filter((id) => map.getLayer(id));
+  const layers = ['live-bus-hit', 'live-bus-labels', 'live-bus-icon', 'live-buses', 'municipal-closures-points', 'municipal-works-points', 'municipal-works-lines', 'metro-stations', 'landmarks', 'civic-pois', 'sports', 'canopy-forms-hit', 'building-types', 'arch-sites', 'playgrounds', 'parks', 'rivers', 'flood-100', 'contours', 'land-cover', 'bus-stops', 'cycleways-centre', 'kifisia-buildings'].filter((id) => map.getLayer(id));
   const hits = map.queryRenderedFeatures(event.point, { layers });
   const feature = layers.map((id) => hits.find((hit) => hit.layer.id === id)).find(Boolean);
   if (!feature) return;
@@ -543,6 +568,9 @@ map.on('click', (event) => {
     showSelection(feature.properties.name || (feature.layer.id === 'parks' ? 'Mapped park' : 'Mapped playground'), feature.layer.id === 'parks' ? 'Park or public green space' : 'Playground', 'Athens GIS open data · mapped extent may be incomplete');
   } else if (feature.layer.id === 'sports') {
     showSelection(feature.properties.name || 'Mapped sports site', [feature.properties.facility, feature.properties.sport].filter(Boolean).join(' · '), 'OpenStreetMap snapshot · 26 Oct 2026. Facility access and availability may differ.');
+  } else if (feature.layer.id === 'canopy-forms-hit') {
+    showBuilding(event, 'Modeled canopy', `Approximate top height: ${feature.properties.height_m} m`,
+      `Meta/WRI CHMv2 · 2019 local imagery; Copernicus tree cover 2024. Illustrative form, not an individual-tree record.`);
   } else if (feature.layer.id === 'building-types') {
     showBuilding(event, feature.properties.name || 'Tagged building', `${feature.properties.category} · OSM building=${feature.properties.building_type}`, 'OpenStreetMap snapshot · 26 Oct 2026. Building type is not verified current use.');
   } else if (feature.layer.id === 'rivers') {
@@ -583,6 +611,12 @@ document.querySelector('#buildings-toggle').addEventListener('change', (event) =
 });
 document.querySelector('#types-toggle').addEventListener('change', (event) => {
   if (map.getLayer('building-types')) map.setLayoutProperty('building-types', 'visibility', event.target.checked && document.querySelector('#buildings-toggle').checked ? 'visible' : 'none');
+});
+document.querySelector('#greenery-toggle').addEventListener('change', (event) => {
+  if (!greeneryLayer) return;
+  greeneryLayer.visible = event.target.checked;
+  map.setLayoutProperty('canopy-forms-hit', 'visibility', event.target.checked ? 'visible' : 'none');
+  map.triggerRepaint();
 });
 document.querySelector('#basemap-select').addEventListener('change', (event) => {
   const satellite = event.target.value === 'satellite';

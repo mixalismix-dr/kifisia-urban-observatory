@@ -38,6 +38,7 @@ h2 { font-size: 13px; letter-spacing: .01em; margin: 0; font-weight: 700; }
 .swatch--types { background: linear-gradient(135deg, #b88272 50%, #627fa2 50%); }
 .swatch--boundary { border: 2px dashed #254d3d; }
 .swatch--trees { background: #469a60; }
+.swatch--greenery { background: #4b7953; border-radius: 50%; box-shadow: 0 2px #826d4f; }
 .swatch--roads { background: #b06334; height: 3px; }
 .swatch--works { background: #be7945; border-radius: 50%; }
 .swatch--closures { background: #a33c43; border-radius: 50%; }

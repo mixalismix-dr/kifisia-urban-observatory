@@ -42,6 +42,8 @@
             <label class="layer"><span><i class="swatch swatch--boundary"></i>Municipal boundary</span><input id="boundary-toggle" type="checkbox" checked /><span class="switch" aria-hidden="true"></span></label>
             <label class="layer"><span><i class="swatch swatch--trees"></i>Tree cover density</span><input id="trees-toggle" type="checkbox" checked /><span class="switch" aria-hidden="true"></span></label>
             <p class="layer-note">Copernicus · 2024 reference year · 10 m source pixels · crown cover 1–100%</p>
+            <label class="layer"><span><i class="swatch swatch--greenery"></i>3D greenery</span><input id="greenery-toggle" type="checkbox" checked /><span class="switch" aria-hidden="true"></span></label>
+            <p class="layer-note" id="greenery-status">Loading modeled canopy forms…</p>
             <div class="density-key" aria-label="Tree cover color scale from 1 to 100 percent"><span>1%</span><i></i><span>100%</span></div>
             <label class="layer"><span><i class="swatch swatch--roads"></i>Main roads</span><input id="roads-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
             <label class="layer"><span><i class="swatch swatch--works"></i>Municipal works</span><input id="works-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
@@ -113,6 +115,7 @@
           <a href="https://www.openstreetmap.org/relation/2080716" target="_blank" rel="noopener noreferrer">Boundary: OpenStreetMap ↗</a>
           <a href="https://openfreemap.org/" target="_blank" rel="noopener noreferrer">Buildings: OpenFreeMap ↗</a>
           <a href="https://land.copernicus.eu/en/products/high-resolution-layer-forests-and-tree-cover?tab=tree_cover_density" target="_blank" rel="noopener noreferrer">Trees: Copernicus / Athens GIS ↗</a>
+          <a href="https://registry.opendata.aws/dataforgood-fb-forestsv2/" target="_blank" rel="noopener noreferrer">Canopy heights: Meta / WRI ↗</a>
           <span>Building heights are generalized map data, not survey measurements.</span>
         </footer>
       </aside>
