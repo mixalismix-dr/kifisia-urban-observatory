@@ -39,6 +39,8 @@ h2 { font-size: 13px; letter-spacing: .01em; margin: 0; font-weight: 700; }
 .swatch--boundary { border: 2px dashed #254d3d; }
 .swatch--trees { background: #469a60; }
 .swatch--roads { background: #b06334; height: 3px; }
+.swatch--works { background: #be7945; border-radius: 50%; }
+.swatch--closures { background: #a33c43; border-radius: 50%; }
 .swatch--bike { background: #198e94; height: 3px; }
 .swatch--stops { background: #f5f5ee; border: 2px solid #214e74; border-radius: 50%; }
 .swatch--buses { background: #214e74; border-radius: 50%; }
@@ -113,6 +115,7 @@ h2 { font-size: 13px; letter-spacing: .01em; margin: 0; font-weight: 700; }
 .maplibregl-ctrl-attrib { font-family: 'DM Mono', monospace; }
 .building-popup .maplibregl-popup-content { min-width: 185px; padding: 14px 26px 13px 15px; border: 1px solid #aebcae; border-radius: 2px; background: #f8f6ec; color: #20362c; box-shadow: 0 7px 24px #18322640; }
 .building-popup .maplibregl-popup-close-button { color: #476454; font-size: 18px; padding: 2px 7px; }
+.building-popup .selection__note { max-height: 140px; overflow: auto; }
 .route-popup .maplibregl-popup-content { width: min(320px, 76vw); padding: 16px; border: 1px solid #aebcae; border-radius: 2px; background: #f8f6ec; color: #20362c; box-shadow: 0 7px 24px #18322640; }
 .route-popup .maplibregl-popup-close-button { color: #476454; font-size: 18px; padding: 2px 7px; }
 .route-popup__trip, .route-popup__next { margin: 7px 0; font-size: 11px; line-height: 1.4; }

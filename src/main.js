@@ -156,6 +156,20 @@ map.on('load', async () => {
     paint: { 'line-color': '#198e94', 'line-width': 4, 'line-dasharray': [2, 1] },
   }, labelLayer);
 
+  for (const [name, toggle] of [['works', 'works-toggle'], ['closures', 'closures-toggle']]) {
+    const source = `municipal-${name}`;
+    map.addSource(source, { type: 'geojson', data: emptyFeatures(), attribution: 'Municipality of Kifisia · public My Maps KML' });
+    map.addLayer({ id: `${source}-points`, type: 'circle', source, filter: ['==', ['geometry-type'], 'Point'],
+      layout: { visibility: layerVisibility(toggle) },
+      paint: { 'circle-radius': 7, 'circle-color': name === 'works' ? '#be7945' : ['match', ['get', 'dateStatus'], 'current', '#a33c43', 'past', '#88948f', '#bc9a4b'],
+        'circle-stroke-color': '#fffaf0', 'circle-stroke-width': 2 },
+    });
+    if (name === 'works') map.addLayer({ id: `${source}-lines`, type: 'line', source,
+      filter: ['==', ['geometry-type'], 'LineString'], layout: { visibility: layerVisibility(toggle) },
+      paint: { 'line-color': '#be7945', 'line-width': 4 },
+    });
+  }
+
   map.addSource('metro-line1', { type: 'geojson', data: localData('metro-line1'), attribution: 'Athens GIS · CC BY 4.0' });
   map.addLayer({ id: 'metro-line1', type: 'line', source: 'metro-line1',
     layout: { visibility: layerVisibility('metro-toggle') },
@@ -299,6 +313,58 @@ function showBuilding(event, title, detail, note) {
     .setLngLat(event.lngLat)
     .setDOMContent(selectionDetails(title, detail, note))
     .addTo(map);
+}
+
+const municipalMaps = {
+  works: '1M_gOxsDf7y683X9rL5yVtWjA2m77TKA',
+  closures: '1f0j6totjS4ADJ_oxDgHQsXPUhYCPaRI',
+};
+function municipalFeatures(kml, name) {
+  const xml = new DOMParser().parseFromString(kml, 'application/xml');
+  if (xml.getElementsByTagName('parsererror').length) throw new Error('Invalid KML');
+  const today = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Athens', day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date());
+  const dayNumber = (value) => {
+    const [day, month, year] = value.split('/').map(Number);
+    return Date.UTC(year, month - 1, day);
+  };
+  const features = [];
+  for (const mark of xml.getElementsByTagName('Placemark')) {
+    const geometry = mark.getElementsByTagName('Point')[0] || mark.getElementsByTagName('LineString')[0];
+    const raw = geometry?.getElementsByTagName('coordinates')[0]?.textContent?.trim();
+    if (!raw) continue;
+    const points = raw.split(/\s+/).map((pair) => pair.split(',').slice(0, 2).map(Number));
+    if (points.some(([lon, lat]) => !Number.isFinite(lon) || !Number.isFinite(lat))) continue;
+    const title = mark.getElementsByTagName('name')[0]?.textContent?.trim() || 'Untitled notice';
+    const html = mark.getElementsByTagName('description')[0]?.textContent || '';
+    const description = new DOMParser().parseFromString(html.replace(/<br\s*\/?\s*>/gi, '\n'), 'text/html').body.textContent.trim().replace(/\s+/g, ' ');
+    const category = [...mark.parentElement.children].find((child) => child.localName === 'name')?.textContent || 'Municipal work';
+    const dates = title.match(/\d{1,2}\/\d{1,2}\/20\d{2}/g) || [];
+    const dateStatus = !dates.length ? 'unverified'
+      : dayNumber(dates.at(-1)) < dayNumber(today) ? 'past'
+        : dayNumber(dates[0]) > dayNumber(today) ? 'upcoming' : 'current';
+    features.push({ type: 'Feature', properties: { name: title, description, category, dateStatus },
+      geometry: { type: geometry.localName, coordinates: geometry.localName === 'Point' ? points[0] : points } });
+  }
+  if (!features.length && name === 'works') throw new Error('No work features in published map');
+  return features;
+}
+async function loadMunicipal(name) {
+  const status = document.querySelector(`#${name}-status`);
+  status.textContent = 'Loading the municipality’s published map…';
+  try {
+    const response = await fetch(`https://www.google.com/maps/d/kml?mid=${municipalMaps[name]}&forcekml=1`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const features = municipalFeatures(await response.text(), name);
+    map.getSource(`municipal-${name}`).setData({ type: 'FeatureCollection', features });
+    const checked = new Date().toLocaleTimeString('en-GB', { timeZone: 'Europe/Athens', hour: '2-digit', minute: '2-digit' });
+    const current = features.filter((feature) => feature.properties.dateStatus === 'current').length;
+    status.textContent = name === 'works'
+      ? `${features.length} published features · checked ${checked} Athens time · verify project status at source`
+      : `${current} current-date notices · ${features.length - current} past or undated · checked ${checked} Athens time`;
+  } catch (error) {
+    map.getSource(`municipal-${name}`)?.setData(emptyFeatures());
+    status.textContent = `Municipal ${name} unavailable: ${error.message}`;
+  }
 }
 
 const staticLines = new Map();
@@ -459,10 +525,15 @@ map.on('click', (event) => {
   buildingPopup?.remove();
   clearBusSelection();
   railPopup?.remove();
-  const layers = ['live-bus-hit', 'live-bus-labels', 'live-bus-icon', 'live-buses', 'metro-stations', 'landmarks', 'civic-pois', 'sports', 'building-types', 'arch-sites', 'playgrounds', 'parks', 'rivers', 'flood-100', 'contours', 'land-cover', 'bus-stops', 'cycleways-centre', 'kifisia-buildings'].filter((id) => map.getLayer(id));
-  const feature = map.queryRenderedFeatures(event.point, { layers })[0];
+  const layers = ['live-bus-hit', 'live-bus-labels', 'live-bus-icon', 'live-buses', 'municipal-closures-points', 'municipal-works-points', 'municipal-works-lines', 'metro-stations', 'landmarks', 'civic-pois', 'sports', 'building-types', 'arch-sites', 'playgrounds', 'parks', 'rivers', 'flood-100', 'contours', 'land-cover', 'bus-stops', 'cycleways-centre', 'kifisia-buildings'].filter((id) => map.getLayer(id));
+  const hits = map.queryRenderedFeatures(event.point, { layers });
+  const feature = layers.map((id) => hits.find((hit) => hit.layer.id === id)).find(Boolean);
   if (!feature) return;
-  if (feature.layer.id === 'metro-stations') {
+  if (feature.layer.id.startsWith('municipal-')) {
+    const works = feature.layer.id.startsWith('municipal-works');
+    showBuilding(event, feature.properties.name, works ? feature.properties.category : `${feature.properties.dateStatus} permit notice`,
+      `${feature.properties.description || 'No description supplied'} · Municipality of Kifisia My Maps · check the source for changes`);
+  } else if (feature.layer.id === 'metro-stations') {
     showRailStation(feature.geometry.coordinates, feature.properties.name);
   } else if (['landmarks', 'civic-pois'].includes(feature.layer.id)) {
     showSelection(feature.properties.name, feature.properties.category, feature.layer.id === 'landmarks' ? 'Municipal attractions · coordinates from OpenStreetMap' : 'Athens GIS / OpenStreetMap · verify details at source');
@@ -538,6 +609,16 @@ for (const [input, layers] of [
     for (const layer of layers) if (map.getLayer(layer)) map.setLayoutProperty(layer, 'visibility', event.target.checked ? 'visible' : 'none');
   });
 }
+for (const name of ['works', 'closures']) {
+  document.querySelector(`#${name}-toggle`).addEventListener('change', (event) => {
+    const visibility = event.target.checked ? 'visible' : 'none';
+    for (const id of [`municipal-${name}-points`, `municipal-${name}-lines`]) {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', visibility);
+    }
+    if (event.target.checked) loadMunicipal(name);
+  });
+}
+setInterval(() => { if (document.querySelector('#closures-toggle').checked) loadMunicipal('closures'); }, 15 * 60 * 1000);
 
 const busToggle = document.querySelector('#buses-toggle');
 const busFeedStatus = document.querySelector('#bus-feed-status');
