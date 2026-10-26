@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { athensTime, shadowGeometry } from '../src/sun-preview.js';
 import { readFileSync } from 'node:fs';
 
 for (const [file, geometry] of [
@@ -44,6 +45,20 @@ assert.ok(search.length > 1000);
 assert.ok(search.some((item) => item.kind === 'Street') && search.some((item) => item.kind === 'Mapped address'));
 assert.ok(search.every((item) => item.name && item.point.length === 2 &&
   item.point[0] >= 23.76 && item.point[0] <= 23.89 && item.point[1] >= 38.05 && item.point[1] <= 38.13));
+const sunBuildings = JSON.parse(readFileSync(new URL('../public/data/kifisia-sun-buildings.geojson', import.meta.url), 'utf8')).features;
+assert.ok(sunBuildings.length > 17000 && sunBuildings.every((feature) => feature.properties.height_m > 0));
+assert.ok(sunBuildings.filter((feature) => feature.properties.basis === 'Athens GIS 2021').length > 15000);
+
+assert.equal(athensTime('2026-01-15', 12).toISOString(), '2026-01-15T10:00:00.000Z');
+assert.equal(athensTime('2026-07-15', 12).toISOString(), '2026-07-15T09:00:00.000Z');
+const square = { type: 'Polygon', coordinates: [[[23.8, 38.07], [23.8001, 38.07], [23.8001, 38.0701], [23.8, 38.0701], [23.8, 38.07]]] };
+const westShadow = shadowGeometry(square, 10, 90, 45);
+assert.ok(Math.min(...westShadow.coordinates[0][0].map((point) => point[0])) < 23.8);
+assert.equal(shadowGeometry(square, 10, 90, 0), null);
+for (const photo of ['alsos', 'goulandris', 'kazouli']) {
+  const jpeg = readFileSync(new URL(`../public/stories/${photo}.jpg`, import.meta.url));
+  assert.equal(jpeg.subarray(0, 3).toString('hex'), 'ffd8ff');
+}
 
 for (const file of ['data/kifisia-tree-cover.png', 'data/kifisia-dsm.png', 'bus-3d.png']) {
   const png = readFileSync(new URL(`../public/${file}`, import.meta.url));

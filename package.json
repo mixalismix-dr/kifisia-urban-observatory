@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "maplibre-gl": "6.16.0",
+    "suncalc": "^2.1.1",
     "three": "^0.186.1"
   },
   "devDependencies": {

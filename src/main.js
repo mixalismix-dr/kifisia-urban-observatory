@@ -2,6 +2,7 @@ import * as maplibregl from 'maplibre-gl';
 import { createBusLayer } from './bus-layer.js';
 import { createGreeneryLayer } from './greenery-layer.js';
 import { createTrainLayer } from './train-layer.js';
+import { setupSunPreview } from './sun-preview.js';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';
@@ -12,6 +13,29 @@ const places = {
   kifisia: [23.8082244, 38.0736082],
   'nea-erythraia': [23.8173613, 38.0882121],
   ekali: [23.8425642, 38.1068395],
+};
+const stories = {
+  alsos: {
+    title: 'Άλσος Κηφισιάς', era: 'A park since 1901', point: [23.810459, 38.072806],
+    copy: 'The municipality dates the creation of the park to 1901. It became one of Greece’s early planned green spaces, beside the railway station.',
+    source: 'https://www.kifissia.gr/sites/default/files/arxia/touristikos%20odigos%20kifissias%20el.pdf',
+    photo: 'alsos.jpg', alt: 'Aerial view of Άλσος Κηφισιάς',
+    photoPage: 'https://commons.wikimedia.org/wiki/File:Άλσος_Κηφισιάς_4106.jpg', photoYear: '2022',
+  },
+  goulandris: {
+    title: 'Goulandris Museum', era: 'Founded in 1964', point: [23.8146485, 38.0743683],
+    copy: 'Angelos and Niki Goulandris founded the natural history museum in 1964. It began with botany and later expanded into zoology, paleontology and geology.',
+    source: 'https://www.gnhm.gr/en/the-museum/founders-and-history/',
+    photo: 'goulandris.jpg', alt: 'Exterior of the Goulandris Natural History Museum',
+    photoPage: 'https://commons.wikimedia.org/wiki/File:Μουσείο_Γουλανδρή_7886.jpg', photoYear: '2015',
+  },
+  kazouli: {
+    title: 'Villa Kazouli', era: '19th-century villa', point: [23.8102896, 38.0675885],
+    copy: 'The municipality identifies Villa Kazouli as a 19th-century architectural landmark at the southern entrance to Kifisia.',
+    source: 'https://kifissia.gr/axiotheata/',
+    photo: 'kazouli.jpg', alt: 'South wing of Villa Kazouli',
+    photoPage: 'https://commons.wikimedia.org/wiki/File:Βίλα_Καζούλη_7942.jpg', photoYear: '2015',
+  },
 };
 const searchInput = document.querySelector('#place-search-input');
 const searchResults = document.querySelector('#place-search-results');
@@ -110,6 +134,7 @@ map.on('load', async () => {
       'fill-extrusion-opacity': 0.82,
     },
   }, labelLayer);
+  setupSunPreview(map);
 
   const localData = (name) => `${import.meta.env.BASE_URL}data/kifisia-${name}.geojson`;
   map.addSource('building-types', { type: 'geojson', data: localData('building-types'), attribution: '© OpenStreetMap contributors · Geofabrik extract, 26 Oct 2026' });
@@ -675,6 +700,38 @@ document.querySelectorAll('.place').forEach((button) => {
     document.querySelectorAll('.place').forEach((item) => item.classList.toggle('is-active', item === button));
     map.flyTo({ center: places[button.dataset.place], zoom: 15.1, pitch: 52, bearing: -22, duration: 1000 });
   });
+});
+
+const storyCard = document.querySelector('#story-card');
+let storyMarker;
+document.querySelectorAll('[data-story]').forEach((button) => button.addEventListener('click', () => {
+  const story = stories[button.dataset.story];
+  document.querySelector('#story-photo').src = `${import.meta.env.BASE_URL}stories/${story.photo}`;
+  document.querySelector('#story-photo').alt = story.alt;
+  document.querySelector('#story-era').textContent = story.era;
+  document.querySelector('#story-title').textContent = story.title;
+  document.querySelector('#story-copy').textContent = story.copy;
+  document.querySelector('#story-source').href = story.source;
+  const credit = document.querySelector('#story-credit');
+  const photoLink = document.createElement('a');
+  photoLink.href = story.photoPage;
+  photoLink.target = '_blank';
+  photoLink.rel = 'noopener noreferrer';
+  photoLink.textContent = 'C messier';
+  const licenseLink = document.createElement('a');
+  licenseLink.href = 'https://creativecommons.org/licenses/by-sa/4.0/';
+  licenseLink.target = '_blank';
+  licenseLink.rel = 'noopener noreferrer';
+  licenseLink.textContent = 'CC BY-SA 4.0';
+  credit.replaceChildren('Photo ', photoLink, ` · ${story.photoYear} · `, licenseLink, ' · resized for the map');
+  storyCard.hidden = false;
+  storyMarker?.remove();
+  storyMarker = new maplibregl.Marker({ color: '#9b5471' }).setLngLat(story.point).addTo(map);
+  map.flyTo({ center: story.point, zoom: 16.7, pitch: 52, duration: 1000 });
+}));
+document.querySelector('#story-close').addEventListener('click', () => {
+  storyCard.hidden = true;
+  storyMarker?.remove();
 });
 
 document.querySelector('#buildings-toggle').addEventListener('change', (event) => {

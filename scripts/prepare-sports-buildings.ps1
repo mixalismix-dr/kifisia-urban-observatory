@@ -19,3 +19,9 @@ if ($LASTEXITCODE -ne 0) { throw 'OSM polygon extraction failed' }
 if ($LASTEXITCODE -ne 0) { throw 'Municipal clip failed' }
 node scripts/make-map-extract.mjs
 if ($LASTEXITCODE -ne 0) { throw 'Map data conversion failed' }
+$heights = 'scripts/downloads/Building_height_2021.tif'
+if (-not (Test-Path $heights)) {
+  Invoke-WebRequest 'https://data.athensgis.gr/data/UrbanPlanning/Building_height.tif' -OutFile $heights
+}
+& (Join-Path $GdalBin 'python-qgis-ltr.bat') scripts/build-sun-buildings.py
+if ($LASTEXITCODE -ne 0) { throw 'Sun footprint preparation failed' }

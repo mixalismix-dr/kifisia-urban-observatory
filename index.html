@@ -36,12 +36,26 @@
               <button class="place" data-place="nea-erythraia" type="button"><span>Νέα Ερυθραία</span><span>Nea Erythraia <b aria-hidden="true">↗</b></span></button>
               <button class="place" data-place="ekali" type="button"><span>Εκάλη</span><span>Ekali <b aria-hidden="true">↗</b></span></button>
             </div>
+            <div class="story-list" role="group" aria-label="Local place stories">
+              <strong>Three local stories</strong>
+              <button type="button" data-story="alsos">Άλσος Κηφισιάς <span>1901 ↗</span></button>
+              <button type="button" data-story="goulandris">Goulandris Museum <span>1964 ↗</span></button>
+              <button type="button" data-story="kazouli">Villa Kazouli <span>19th c. ↗</span></button>
+            </div>
           </section>
 
           <section class="section" aria-labelledby="layers-heading">
             <div class="section__head"><span>02</span><h2 id="layers-heading">Map layers</h2></div>
             <label class="basemap-choice" for="basemap-select">Base map <select id="basemap-select"><option value="street">Street map</option><option value="satellite">Satellite imagery</option></select></label>
             <label class="layer"><span><i class="swatch swatch--built"></i>3D buildings</span><input id="buildings-toggle" type="checkbox" checked /><span class="switch" aria-hidden="true"></span></label>
+            <label class="layer"><span><i class="swatch swatch--sun"></i>Sun &amp; building shade</span><input id="sun-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+            <div class="sun-controls" id="sun-controls" hidden>
+              <label for="sun-date">Date</label><input id="sun-date" type="date" />
+              <label for="sun-hour">Time <output id="sun-hour-label" for="sun-hour">12:00 Athens</output></label>
+              <input id="sun-hour" type="range" min="7" max="19" step="1" value="12" />
+              <p id="sun-status" role="status">Zoom in to see modeled building shadows.</p>
+              <p>Approximate flat-ground shade. <a href="https://land.copernicus.eu/en/products/urban-atlas?tab=datasets" target="_blank" rel="noopener noreferrer">Copernicus 2021 building-block heights</a> (10 m grid) cover 15,527 of 17,675 OSM footprints; 2,146 use an assumed 8 m. Shadow length is capped at 60 m. Trees and terrain are excluded. Illustrative only.</p>
+            </div>
             <label class="layer"><span><i class="swatch swatch--types"></i>Tagged building types <small>933</small></span><input id="types-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
             <p class="layer-note">OSM · 26 Oct 2026 · colors cover tagged types only. Other buildings stay tan. Tags describe type, not verified use.</p>
             <div class="type-key" aria-label="Building type colors"><span><i style="background:#b88272"></i>Residential</span><span><i style="background:#627fa2"></i>Civic &amp; health</span><span><i style="background:#c49b4a"></i>Business</span><span><i style="background:#9a77a8"></i>Worship</span><span><i style="background:#848f91"></i>Industrial</span><span><i style="background:#8ca6a0"></i>Ancillary</span></div>
@@ -133,6 +147,14 @@
           <iframe id="source-frame" title="Official source map" referrerpolicy="strict-origin-when-cross-origin"></iframe>
         </dialog>
         <div class="map-title" aria-hidden="true"><span>38° 04′ N · 23° 48′ E</span><strong>ΚΗΦΙΣΙΑ</strong></div>
+        <article class="story-card" id="story-card" aria-live="polite" hidden>
+          <button class="story-card__close" id="story-close" type="button" aria-label="Close place story">×</button>
+          <img id="story-photo" alt="" />
+          <div class="story-card__body"><span id="story-era"></span><h2 id="story-title"></h2><p id="story-copy"></p>
+            <a id="story-source" target="_blank" rel="noopener noreferrer">Read source ↗</a>
+            <small id="story-credit"></small>
+          </div>
+        </article>
         <div class="map-status" id="map-status" role="status">Loading map…</div>
         <div id="imagery-credit" class="imagery-credit" hidden>Imagery: Esri, Maxar, Earthstar Geographics, GIS User Community</div>
         <button class="reset-view" id="reset-view" type="button" aria-label="Show the whole municipality">↗ <span>Whole municipality</span></button>
