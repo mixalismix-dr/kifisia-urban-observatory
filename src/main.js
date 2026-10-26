@@ -1,6 +1,7 @@
 import * as maplibregl from 'maplibre-gl';
 import { createBusLayer } from './bus-layer.js';
 import { createGreeneryLayer } from './greenery-layer.js';
+import { createTrainLayer } from './train-layer.js';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';
@@ -18,6 +19,8 @@ const status = document.querySelector('#map-status');
 const selection = document.querySelector('#selection-content');
 let busModelLayer;
 let greeneryLayer;
+let trainModelLayer;
+const kifissiaStation = [23.808219792, 38.073395087];
 const emptyFeatures = () => ({ type: 'FeatureCollection', features: [] });
 const layerVisibility = (toggle) => document.querySelector(`#${toggle}`).checked ? 'visible' : 'none';
 const map = new maplibregl.Map({
@@ -188,15 +191,18 @@ map.on('load', async () => {
   trainIcon.setAttribute('aria-label', 'Kifissia Metro Line 1 station; view route and stops');
   trainIcon.innerHTML = '<span class="rail-station-marker__front" aria-hidden="true"><i></i><i></i></span><span class="rail-station-marker__name">M1 Kifissia</span>';
   const trainMarker = new maplibregl.Marker({ element: trainIcon, anchor: 'bottom' })
-    .setLngLat([23.808219792, 38.073395087]).addTo(map);
+    .setLngLat(kifissiaStation).addTo(map);
   trainIcon.addEventListener('click', (event) => {
     event.stopPropagation();
     clearBusSelection();
-    showRailStation([23.808219792, 38.073395087], 'KIFISSIA');
+    showRailStation(kifissiaStation, 'KIFISSIA');
   });
+  void loadTrainModel();
   document.querySelector('#metro-toggle').addEventListener('change', (event) => {
     trainMarker.getElement().hidden = !event.target.checked;
     for (const id of ['metro-line1', 'metro-stations']) map.setLayoutProperty(id, 'visibility', event.target.checked ? 'visible' : 'none');
+    if (map.getLayer('train-model-hit')) map.setLayoutProperty('train-model-hit', 'visibility', event.target.checked ? 'visible' : 'none');
+    if (trainModelLayer) { trainModelLayer.visible = event.target.checked; map.triggerRepaint(); }
     if (!event.target.checked) railPopup?.remove();
   });
 
@@ -316,6 +322,27 @@ async function loadGreenery() {
     label.textContent = 'Meta/WRI CHMv2 · 2019 local imagery · Copernicus cover 2024 · representative forms, approximate heights · zoom in';
   } catch (error) {
     label.textContent = `3D greenery unavailable: ${error.message}`;
+  }
+}
+
+async function loadTrainModel() {
+  try {
+    const response = await fetch(`${import.meta.env.BASE_URL}data/kifisia-metro-line1.geojson`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    const [start, next] = data.features[0].geometry.coordinates[0];
+    const anchor = start.map((value, index) => value + (next[index] - value) * 0.55);
+    const bearing = Math.atan2((next[0] - start[0]) * Math.cos(start[1] * Math.PI / 180), next[1] - start[1]) * 180 / Math.PI;
+    map.addSource('train-anchor', { type: 'geojson', data: { type: 'Feature', geometry: { type: 'Point', coordinates: anchor }, properties: {} } });
+    trainModelLayer = createTrainLayer(map, anchor, bearing);
+    map.addLayer(trainModelLayer, 'metro-stations');
+    map.addLayer({ id: 'train-model-hit', type: 'circle', source: 'train-anchor', minzoom: 13,
+      layout: { visibility: layerVisibility('metro-toggle') },
+      paint: { 'circle-radius': 20, 'circle-opacity': 0, 'circle-stroke-opacity': 0 },
+    });
+    trainModelLayer.visible = document.querySelector('#metro-toggle').checked;
+  } catch (error) {
+    console.warn('Static 3D train model unavailable; station marker remains.', error);
   }
 }
 
@@ -550,7 +577,7 @@ map.on('click', (event) => {
   buildingPopup?.remove();
   clearBusSelection();
   railPopup?.remove();
-  const layers = ['live-bus-hit', 'live-bus-labels', 'live-bus-icon', 'live-buses', 'municipal-closures-points', 'municipal-works-points', 'municipal-works-lines', 'metro-stations', 'landmarks', 'civic-pois', 'sports', 'canopy-forms-hit', 'building-types', 'arch-sites', 'playgrounds', 'parks', 'rivers', 'flood-100', 'contours', 'land-cover', 'bus-stops', 'cycleways-centre', 'kifisia-buildings'].filter((id) => map.getLayer(id));
+  const layers = ['live-bus-hit', 'live-bus-labels', 'live-bus-icon', 'live-buses', 'municipal-closures-points', 'municipal-works-points', 'municipal-works-lines', 'train-model-hit', 'metro-stations', 'landmarks', 'civic-pois', 'sports', 'canopy-forms-hit', 'building-types', 'arch-sites', 'playgrounds', 'parks', 'rivers', 'flood-100', 'contours', 'land-cover', 'bus-stops', 'cycleways-centre', 'kifisia-buildings'].filter((id) => map.getLayer(id));
   const hits = map.queryRenderedFeatures(event.point, { layers });
   const feature = layers.map((id) => hits.find((hit) => hit.layer.id === id)).find(Boolean);
   if (!feature) return;
@@ -558,6 +585,8 @@ map.on('click', (event) => {
     const works = feature.layer.id.startsWith('municipal-works');
     showBuilding(event, feature.properties.name, works ? feature.properties.category : `${feature.properties.dateStatus} permit notice`,
       `${feature.properties.description || 'No description supplied'} · Municipality of Kifisia My Maps · check the source for changes`);
+  } else if (feature.layer.id === 'train-model-hit') {
+    showRailStation(kifissiaStation, 'KIFISSIA');
   } else if (feature.layer.id === 'metro-stations') {
     showRailStation(feature.geometry.coordinates, feature.properties.name);
   } else if (['landmarks', 'civic-pois'].includes(feature.layer.id)) {

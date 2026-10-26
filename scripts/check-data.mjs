@@ -33,6 +33,12 @@ assert.ok(canopy.features.every(({ geometry, properties }) =>
   properties.height_m >= 5 && properties.height_m <= 30 &&
   properties.crown_radius_m >= 2 && properties.crown_radius_m <= 8));
 
+const rail = JSON.parse(readFileSync(new URL('../public/data/kifisia-metro-line1.geojson', import.meta.url), 'utf8'));
+const [terminal, nextRailPoint] = rail.features[0].geometry.coordinates[0];
+assert.ok(Math.abs(terminal[0] - 23.808219792) < 0.001 && Math.abs(terminal[1] - 38.073395087) < 0.001,
+  'Line 1 must start at Kifissia for the train model');
+assert.ok(nextRailPoint[1] < terminal[1], 'Line 1 must point south from Kifissia');
+
 for (const file of ['data/kifisia-tree-cover.png', 'data/kifisia-dsm.png', 'bus-3d.png']) {
   const png = readFileSync(new URL(`../public/${file}`, import.meta.url));
   assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
