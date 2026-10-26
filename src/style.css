@@ -130,9 +130,7 @@ h2 { font-size: 13px; letter-spacing: .01em; margin: 0; font-weight: 700; }
 .route-popup__view:hover { background: #e2eadc; }
 .rail-station-marker { display: flex; align-items: center; gap: 5px; border: 1px solid #a0444d; border-radius: 3px; padding: 4px 6px; background: #fffaf0; color: #743039; box-shadow: 0 2px 8px #201a193d; }
 .rail-station-marker[hidden] { display: none; }
-.rail-station-marker__front { position: relative; display: flex; gap: 2px; width: 17px; height: 17px; border: 2px solid #a0444d; border-radius: 5px 5px 3px 3px; padding: 3px 2px; }
-.rail-station-marker__front i { flex: 1; background: #a0444d; border-radius: 1px; }
-.rail-station-marker__front::after { content: ''; position: absolute; bottom: -5px; left: 1px; width: 3px; height: 3px; background: #a0444d; box-shadow: 9px 0 #a0444d; }
+.rail-station-marker__icon { display: block; width: 32px; height: 20px; color: #a0444d; }
 .rail-station-marker__name { font: 10px 'DM Mono', monospace; white-space: nowrap; }
 @media (max-width: 760px) {
   .app { display: flex; flex-direction: column; height: 100dvh; min-height: 0; }

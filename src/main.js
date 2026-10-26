@@ -189,7 +189,7 @@ map.on('load', async () => {
   trainIcon.type = 'button';
   trainIcon.className = 'rail-station-marker';
   trainIcon.setAttribute('aria-label', 'Kifissia Metro Line 1 station; view route and stops');
-  trainIcon.innerHTML = '<span class="rail-station-marker__front" aria-hidden="true"><i></i><i></i></span><span class="rail-station-marker__name">M1 Kifissia</span>';
+  trainIcon.innerHTML = '<svg class="rail-station-marker__icon" viewBox="0 0 40 24" aria-hidden="true"><path d="M2 4h15v13H2zM23 4h15v13H23zM17 12h6M1 22h38" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 7h4v4H5zM11 7h4v4h-4zM26 7h4v4h-4zM32 7h4v4h-4z" fill="currentColor"/><circle cx="6" cy="19" r="1.7" fill="currentColor"/><circle cx="13" cy="19" r="1.7" fill="currentColor"/><circle cx="27" cy="19" r="1.7" fill="currentColor"/><circle cx="34" cy="19" r="1.7" fill="currentColor"/></svg><span class="rail-station-marker__name">M1 Kifissia</span>';
   const trainMarker = new maplibregl.Marker({ element: trainIcon, anchor: 'bottom' })
     .setLngLat(kifissiaStation).addTo(map);
   trainIcon.addEventListener('click', (event) => {
@@ -338,7 +338,7 @@ async function loadTrainModel() {
     map.addLayer(trainModelLayer, 'metro-stations');
     map.addLayer({ id: 'train-model-hit', type: 'circle', source: 'train-anchor', minzoom: 13,
       layout: { visibility: layerVisibility('metro-toggle') },
-      paint: { 'circle-radius': 20, 'circle-opacity': 0, 'circle-stroke-opacity': 0 },
+      paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 15, 20, 18, 42], 'circle-opacity': 0, 'circle-stroke-opacity': 0 },
     });
     trainModelLayer.visible = document.querySelector('#metro-toggle').checked;
   } catch (error) {

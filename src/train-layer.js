@@ -8,6 +8,7 @@ const materials = {
   roof: new THREE.MeshLambertMaterial({ color: '#aebbb5' }),
   dark: new THREE.MeshLambertMaterial({ color: '#33464a' }),
   light: new THREE.MeshLambertMaterial({ color: '#f8edc5' }),
+  tail: new THREE.MeshLambertMaterial({ color: '#a0444d' }),
 };
 
 function trainModel() {
@@ -17,22 +18,32 @@ function trainModel() {
     mesh.position.set(x, y, z);
     train.add(mesh);
   };
-  // The front faces north (-Y). This is a schematic Line 1 carriage.
-  box(2.8, 17, 2.7, 0, 0, 1.65, materials.body);
-  box(2.82, 16.8, 0.52, 0, 0, 1.25, materials.green);
-  box(2.5, 15.4, 0.18, 0, 0, 3.1, materials.roof);
-  box(2.3, 0.1, 1.15, 0, -8.55, 2.1, materials.glass);
-  box(2.3, 0.1, 1.15, 0, 8.55, 2.1, materials.glass);
-  for (const side of [-1, 1]) {
-    for (const offset of [-5.5, -3.7, -1.9, 1.9, 3.7, 5.5])
-      box(0.07, 1.25, 0.8, side * 1.43, offset, 2.3, materials.glass);
-    for (const offset of [-0.1, 7.2])
-      box(0.08, 1.2, 1.6, side * 1.44, offset, 1.6, materials.roof);
-    for (const offset of [-5.2, 5.2])
-      box(0.35, 1, 0.55, side * 1.35, offset, 0.42, materials.dark);
+  // Two connected carriages, bogies and rails distinguish this from the bus.
+  // The cab faces north (-Y) before the model rotates to follow Line 1.
+  for (const center of [-6.8, 6.8]) {
+    box(2.9, 12.8, 2.6, 0, center, 1.7, materials.body);
+    box(2.92, 12.6, 0.53, 0, center, 1.2, materials.green);
+    box(2.7, 12.5, 0.16, 0, center, 3.08, materials.roof);
+    box(1.2, 2.1, 0.2, 0, center, 3.2, materials.roof);
+    for (const side of [-1, 1]) {
+      for (const offset of [-4.3, -2.8, 2.8, 4.3])
+        box(0.07, 1.15, 0.82, side * 1.49, center + offset, 2.27, materials.glass);
+      for (const offset of [-0.7, 0.7])
+        box(0.08, 1.05, 1.63, side * 1.5, center + offset, 1.85, materials.roof);
+    }
   }
-  for (const side of [-0.85, 0.85]) box(0.32, 0.12, 0.24, side, -8.62, 1.15, materials.light);
-  box(1.2, 1.8, 0.2, 0, 1.5, 3.22, materials.roof);
+  box(2.2, 0.8, 2.2, 0, 0, 1.7, materials.dark);
+  for (const end of [-13.25, 13.25]) {
+    box(2.5, 0.14, 1.2, 0, end, 2.22, materials.glass);
+    for (const side of [-0.9, 0.9])
+      box(0.3, 0.16, 0.22, side, end, 1.18, end < 0 ? materials.light : materials.tail);
+  }
+  box(1.1, 0.16, 0.22, 0, -13.35, 2.94, materials.green);
+  for (const side of [-0.87, 0.87]) box(0.12, 29, 0.14, side, 0, 0.13, materials.dark);
+  for (const axle of [-10.3, -3.3, 3.3, 10.3]) {
+    box(3, 1.25, 0.3, 0, axle, 0.45, materials.dark);
+    for (const side of [-1.23, 1.23]) box(0.24, 0.8, 0.75, side, axle, 0.46, materials.dark);
+  }
   return train;
 }
 
