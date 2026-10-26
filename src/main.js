@@ -11,10 +11,12 @@ const places = {
   'nea-erythraia': [23.8173613, 38.0882121],
   ekali: [23.8425642, 38.1068395],
 };
+const localBounds = [[23.71, 38.02], [23.94, 38.16]];
 
 const status = document.querySelector('#map-status');
 const selection = document.querySelector('#selection-content');
 let busModelLayer;
+const emptyFeatures = () => ({ type: 'FeatureCollection', features: [] });
 const layerVisibility = (toggle) => document.querySelector(`#${toggle}`).checked ? 'visible' : 'none';
 const map = new maplibregl.Map({
   container: 'map',
@@ -23,7 +25,7 @@ const map = new maplibregl.Map({
   zoom: 15.1,
   pitch: 52,
   bearing: -22,
-  maxBounds: [[23.71, 38.02], [23.94, 38.16]],
+  maxBounds: localBounds,
   attributionControl: false,
   canvasContextAttributes: { antialias: true },
 });
@@ -154,6 +156,49 @@ map.on('load', async () => {
     paint: { 'line-color': '#198e94', 'line-width': 4, 'line-dasharray': [2, 1] },
   }, labelLayer);
 
+  map.addSource('metro-line1', { type: 'geojson', data: localData('metro-line1'), attribution: 'Athens GIS · CC BY 4.0' });
+  map.addLayer({ id: 'metro-line1', type: 'line', source: 'metro-line1',
+    layout: { visibility: layerVisibility('metro-toggle') },
+    paint: { 'line-color': '#a0444d', 'line-width': 4, 'line-opacity': 0.88 },
+  }, labelLayer);
+  map.addSource('metro-stations', { type: 'geojson', data: localData('metro-stations'), attribution: 'Athens GIS · CC BY 4.0' });
+  map.addLayer({ id: 'metro-stations', type: 'circle', source: 'metro-stations',
+    layout: { visibility: layerVisibility('metro-toggle') },
+    paint: { 'circle-color': '#f8f6ec', 'circle-radius': 6, 'circle-stroke-color': '#a0444d', 'circle-stroke-width': 2.5 },
+  });
+  const trainIcon = document.createElement('button');
+  trainIcon.type = 'button';
+  trainIcon.className = 'rail-station-marker';
+  trainIcon.setAttribute('aria-label', 'Kifissia Metro Line 1 station; view route and stops');
+  trainIcon.innerHTML = '<span class="rail-station-marker__front" aria-hidden="true"><i></i><i></i></span><span class="rail-station-marker__name">M1 Kifissia</span>';
+  const trainMarker = new maplibregl.Marker({ element: trainIcon, anchor: 'bottom' })
+    .setLngLat([23.808219792, 38.073395087]).addTo(map);
+  trainIcon.addEventListener('click', (event) => {
+    event.stopPropagation();
+    clearBusSelection();
+    showRailStation([23.808219792, 38.073395087], 'KIFISSIA');
+  });
+  document.querySelector('#metro-toggle').addEventListener('change', (event) => {
+    trainMarker.getElement().hidden = !event.target.checked;
+    for (const id of ['metro-line1', 'metro-stations']) map.setLayoutProperty(id, 'visibility', event.target.checked ? 'visible' : 'none');
+    if (!event.target.checked) railPopup?.remove();
+  });
+
+  map.addSource('selected-route', { type: 'geojson', data: emptyFeatures(), attribution: 'OASA GTFS via athens-transit-rt' });
+  map.addLayer({
+    id: 'selected-route-whole', type: 'line', source: 'selected-route', filter: ['==', ['get', 'kind'], 'whole'],
+    paint: { 'line-color': '#355d72', 'line-width': 4, 'line-opacity': 0.58 },
+  }, labelLayer);
+  map.addLayer({
+    id: 'selected-route-ahead', type: 'line', source: 'selected-route', filter: ['==', ['get', 'kind'], 'ahead'],
+    paint: { 'line-color': '#22a7d0', 'line-width': 6, 'line-opacity': 0.96 },
+  }, labelLayer);
+  map.addSource('selected-route-stops', { type: 'geojson', data: emptyFeatures(), attribution: 'OASA GTFS via athens-transit-rt' });
+  map.addLayer({
+    id: 'selected-route-stops', type: 'circle', source: 'selected-route-stops',
+    paint: { 'circle-radius': 5, 'circle-color': '#fff9e9', 'circle-stroke-color': '#176a89', 'circle-stroke-width': 2 },
+  });
+
   map.addSource('bus-stops', { type: 'geojson', data: `${import.meta.env.BASE_URL}data/kifisia-bus-stops.geojson`, attribution: 'OASA stops via Athens GIS' });
   map.addLayer({
     id: 'bus-stops', type: 'circle', source: 'bus-stops', minzoom: 12,
@@ -218,6 +263,7 @@ map.on('load', async () => {
     });
     status.textContent = 'Kifisia municipality · open data';
     document.querySelector('#reset-view').addEventListener('click', () => {
+      clearBusSelection();
       const bounds = new maplibregl.LngLatBounds();
       for (const ring of boundary.features[0].geometry.coordinates) {
         for (const point of ring) bounds.extend(point);
@@ -255,12 +301,170 @@ function showBuilding(event, title, detail, note) {
     .addTo(map);
 }
 
+const staticLines = new Map();
+let busPopup;
+let selectedBusRoute;
+let routeRequest = 0;
+let routeBoundsExpanded = false;
+
+async function fetchJson(url) {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return response.json();
+}
+function staticLine(line) {
+  if (!staticLines.has(line)) {
+    const url = `https://angelospk.github.io/athens-transit-rt/static/v1/lines/${encodeURIComponent(line)}.json`;
+    staticLines.set(line, fetchJson(url).catch((error) => { staticLines.delete(line); throw error; }));
+  }
+  return staticLines.get(line);
+}
+function clearBusSelection() {
+  routeRequest++;
+  const popup = busPopup;
+  busPopup = null;
+  popup?.remove();
+  selectedBusRoute = null;
+  map.getSource('selected-route')?.setData(emptyFeatures());
+  map.getSource('selected-route-stops')?.setData(emptyFeatures());
+  if (routeBoundsExpanded) { map.setMaxBounds(localBounds); routeBoundsExpanded = false; }
+}
+function drawBusRoute(selected) {
+  const toLngLat = ([lat, lon]) => [lon, lat];
+  const shape = selected.variant.shape.map(toLngLat);
+  const ahead = [...(selected.vehicle.path || []), ...(selected.vehicle.path_beyond || [])].map(toLngLat);
+  map.getSource('selected-route').setData({ type: 'FeatureCollection', features: [
+    { type: 'Feature', properties: { kind: 'whole' }, geometry: { type: 'LineString', coordinates: shape } },
+    ...(ahead.length > 1 ? [{ type: 'Feature', properties: { kind: 'ahead' }, geometry: { type: 'LineString', coordinates: ahead } }] : []),
+  ] });
+  map.getSource('selected-route-stops').setData({ type: 'FeatureCollection', features: selected.variant.stops.flatMap((id, order) => {
+    const stop = selected.lineData.stops[id];
+    return stop ? [{ type: 'Feature', properties: { name: stop.name, order: order + 1 }, geometry: { type: 'Point', coordinates: [stop.lon, stop.lat] } }] : [];
+  }) });
+}
+function fitRoute(coordinates) {
+  const bounds = new maplibregl.LngLatBounds();
+  for (const point of coordinates) bounds.extend(point);
+  map.setMaxBounds(null);
+  routeBoundsExpanded = true;
+  map.fitBounds(bounds, { padding: 65, maxZoom: 15, pitch: 40, duration: 1000 });
+}
+function busPopupContent(vehicle, variant, lineData, liveVehicle) {
+  const content = document.createElement('div');
+  const addText = (tag, className, value) => {
+    const element = document.createElement(tag);
+    element.className = className;
+    element.textContent = value;
+    content.append(element);
+    return element;
+  };
+  addText('strong', 'selection__title', `Bus ${vehicle.line}`);
+  addText('p', 'selection__detail', variant.headsign);
+  if (liveVehicle?.trip_label) addText('p', 'route-popup__trip', liveVehicle.trip_label);
+  const nextId = liveVehicle?.next_stop_id;
+  const nextIndex = variant.stops.indexOf(nextId);
+  addText('p', 'route-popup__next', nextIndex >= 0 ? `Next stop: ${lineData.stops[nextId]?.name || nextId}` : 'Next stop not confirmed by the live feed');
+  const list = document.createElement('ol');
+  list.className = 'route-popup__stops';
+  for (const [index, id] of variant.stops.entries()) {
+    const item = document.createElement('li');
+    item.textContent = lineData.stops[id]?.name || `Stop ${id}`;
+    if (nextIndex >= 0 && index < nextIndex) item.className = 'route-popup__passed';
+    if (index === nextIndex) item.className = 'route-popup__current';
+    list.append(item);
+  }
+  content.append(list);
+  if (nextIndex >= 0) list.scrollTop = Math.max(0, nextIndex * 26 - 35);
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'route-popup__view';
+  button.textContent = 'View full route ↗';
+  button.addEventListener('click', (event) => { event.stopPropagation(); fitRoute(variant.shape.map(([lat, lon]) => [lon, lat])); });
+  content.append(button);
+  addText('p', 'selection__note', 'Route and stops: OASA GTFS snapshot. Bright blue shows the live feed’s path ahead when available. Detours may differ.');
+  return content;
+}
+async function selectBus(event, properties) {
+  const vehicle = nearbyBuses.get(String(properties.id));
+  if (!vehicle) return;
+  const request = routeRequest;
+  const loading = selectionDetails(`Bus ${vehicle.line}`, 'Loading route and stops…', 'Community OASA feed · last reported position');
+  busPopup = new maplibregl.Popup({ className: 'route-popup', closeOnClick: false, maxWidth: '340px', offset: 16 })
+    .setLngLat([vehicle.lon, vehicle.lat]).setDOMContent(loading).addTo(map);
+  const popup = busPopup;
+  popup.on('close', () => { if (busPopup === popup) clearBusSelection(); });
+  showSelection(`Bus ${vehicle.line}`, 'Loading route and stops…', 'Community OASA feed');
+  const [staticResult, liveResult] = await Promise.allSettled([
+    staticLine(vehicle.line), fetchJson(`https://transit.haroldpoi.dev/v1/lines/${encodeURIComponent(vehicle.line)}`),
+  ]);
+  if (request !== routeRequest || busPopup !== popup) return;
+  if (staticResult.status !== 'fulfilled') {
+    const message = 'Route and stop data are unavailable right now.';
+    popup.setDOMContent(selectionDetails(`Bus ${vehicle.line}`, message, 'Live position remains available.'));
+    showSelection(`Bus ${vehicle.line}`, message, 'Live position remains available.');
+    return;
+  }
+  const lineData = staticResult.value;
+  const liveVehicle = liveResult.status === 'fulfilled'
+    ? liveResult.value.vehicles?.find((item) => String(item.id) === String(vehicle.id)) : null;
+  const variant = lineData.variants[liveVehicle?.variant || vehicle.variant];
+  if (!variant?.shape?.length || !variant?.stops?.length) {
+    popup.setDOMContent(selectionDetails(`Bus ${vehicle.line}`, 'This vehicle’s route variant is unavailable.', 'Live position remains available.'));
+    return;
+  }
+  selectedBusRoute = { id: String(vehicle.id), vehicle, variant, lineData };
+  drawBusRoute(selectedBusRoute);
+  popup.setDOMContent(busPopupContent(vehicle, variant, lineData, liveVehicle));
+  showSelection(`Bus ${vehicle.line}`, variant.headsign, `${variant.stops.length} ordered stops · community OASA route snapshot`);
+}
+
+let railPopup;
+let railData;
+async function showRailStation(coordinates, name) {
+  railPopup?.remove();
+  const popup = new maplibregl.Popup({ className: 'route-popup rail-popup', closeOnClick: false, maxWidth: '340px', offset: 16 })
+    .setLngLat(coordinates).setDOMContent(selectionDetails(`M1 ${name}`, 'Loading stations…', 'Athens GIS · static rail data')).addTo(map);
+  railPopup = popup;
+  try {
+    if (!railData) railData = Promise.all(['metro-stations', 'metro-line1'].map((part) =>
+      fetchJson(`${import.meta.env.BASE_URL}data/kifisia-${part}.geojson`)));
+    const [stations, line] = await railData;
+    if (railPopup !== popup) return;
+    const content = document.createElement('div');
+    content.append(selectionDetails(`M1 ${name}`, 'Kifissia → Piraeus', 'Athens GIS · static route and stations; no live train position'));
+    const list = document.createElement('ol');
+    list.className = 'route-popup__stops';
+    for (const station of stations.features) {
+      const item = document.createElement('li');
+      item.textContent = station.properties.name;
+      if (station.properties.name === name) item.className = 'route-popup__current';
+      list.append(item);
+    }
+    content.append(list);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'route-popup__view';
+    button.textContent = 'View full route ↗';
+    button.addEventListener('click', (event) => { event.stopPropagation(); fitRoute(line.features[0].geometry.coordinates.flat()); });
+    content.append(button);
+    popup.setDOMContent(content);
+    showSelection(`M1 ${name}`, 'Kifissia → Piraeus · 24 stations', 'Athens GIS static data · no live train position');
+  } catch {
+    railData = null;
+    if (railPopup === popup) popup.setDOMContent(selectionDetails(`M1 ${name}`, 'Station list unavailable.', 'Athens GIS data could not be loaded'));
+  }
+}
+
 map.on('click', (event) => {
   buildingPopup?.remove();
-  const layers = ['live-bus-hit', 'live-bus-labels', 'live-bus-icon', 'live-buses', 'landmarks', 'civic-pois', 'sports', 'building-types', 'arch-sites', 'playgrounds', 'parks', 'rivers', 'flood-100', 'contours', 'land-cover', 'bus-stops', 'cycleways-centre', 'kifisia-buildings'].filter((id) => map.getLayer(id));
+  clearBusSelection();
+  railPopup?.remove();
+  const layers = ['live-bus-hit', 'live-bus-labels', 'live-bus-icon', 'live-buses', 'metro-stations', 'landmarks', 'civic-pois', 'sports', 'building-types', 'arch-sites', 'playgrounds', 'parks', 'rivers', 'flood-100', 'contours', 'land-cover', 'bus-stops', 'cycleways-centre', 'kifisia-buildings'].filter((id) => map.getLayer(id));
   const feature = map.queryRenderedFeatures(event.point, { layers })[0];
   if (!feature) return;
-  if (['landmarks', 'civic-pois'].includes(feature.layer.id)) {
+  if (feature.layer.id === 'metro-stations') {
+    showRailStation(feature.geometry.coordinates, feature.properties.name);
+  } else if (['landmarks', 'civic-pois'].includes(feature.layer.id)) {
     showSelection(feature.properties.name, feature.properties.category, feature.layer.id === 'landmarks' ? 'Municipal attractions · coordinates from OpenStreetMap' : 'Athens GIS / OpenStreetMap · verify details at source');
   } else if (feature.layer.id === 'arch-sites') {
     showSelection(feature.properties.name || feature.properties.name_en || 'Mapped historic site', feature.properties.historic || 'Historic feature', 'Athens GIS archaeological-sites layer');
@@ -281,9 +485,7 @@ map.on('click', (event) => {
   } else if (feature.layer.id === 'bus-stops') {
     showSelection(feature.properties.name || 'Bus stop', `Routes: ${feature.properties.route_ref || 'Not listed'}`, 'OASA stops via Athens GIS · published 21 Oct 2026');
   } else if (['live-bus-hit', 'live-bus-labels', 'live-bus-icon', 'live-buses'].includes(feature.layer.id)) {
-    const time = new Date(Number(feature.properties.position_at) * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-    const heading = Number(feature.properties.heading);
-    showSelection(`Bus ${feature.properties.line}`, `Last position: ${time}${Number.isFinite(heading) && feature.properties.heading !== undefined ? ` · heading ${Math.round(heading)}°` : ''}`, 'Community OASA telematics feed · position and heading may be delayed');
+    selectBus(event, feature.properties);
   } else if (feature.layer.id === 'cycleways-centre') {
     showSelection(feature.properties.name || 'Mapped bike facility', feature.properties.facility, 'OpenStreetMap way · Kifisia centre extract, 25 Oct 2026');
   } else {
@@ -339,6 +541,7 @@ for (const [input, layers] of [
 
 const busToggle = document.querySelector('#buses-toggle');
 const busFeedStatus = document.querySelector('#bus-feed-status');
+let nearbyBuses = new Map();
 async function refreshBuses() {
   if (!busToggle.checked || !map.getSource('live-buses')) return;
   try {
@@ -347,19 +550,37 @@ async function refreshBuses() {
     const feed = await response.json();
     const now = Date.now() / 1000;
     if (!Array.isArray(feed.vehicles) || now - feed.updated_at > 300) throw new Error('Feed is older than 5 minutes');
-    const features = feed.vehicles.filter((bus) =>
+    const visibleVehicles = feed.vehicles.filter((bus) =>
       bus.lon >= 23.76 && bus.lon <= 23.89 && bus.lat >= 38.06 && bus.lat <= 38.13 &&
       now - bus.position_at <= 300 && bus.position_at <= now + 30
-    ).map((bus) => ({
+    );
+    nearbyBuses = new Map(visibleVehicles.map((bus) => [String(bus.id), bus]));
+    const features = visibleVehicles.map((bus) => ({
       type: 'Feature', geometry: { type: 'Point', coordinates: [bus.lon, bus.lat] },
-      properties: { line: bus.line, position_at: bus.position_at,
+      properties: { id: String(bus.id), line: bus.line, variant: bus.variant, position_at: bus.position_at,
         ...(Number.isFinite(bus.bearing) && bus.bearing >= 0 && bus.bearing < 360 ? { heading: bus.bearing } : {}) },
     }));
     map.getSource('live-buses').setData({ type: 'FeatureCollection', features });
     busModelLayer?.setVehicles(features);
+    const selected = selectedBusRoute && nearbyBuses.get(selectedBusRoute.id);
+    if (selected) {
+      selectedBusRoute.vehicle = selected;
+      selectedBusRoute.variant = selectedBusRoute.lineData.variants[selected.variant] || selectedBusRoute.variant;
+      drawBusRoute(selectedBusRoute);
+      busPopup?.setLngLat([selected.lon, selected.lat]);
+      const currentSelection = selectedBusRoute;
+      fetchJson(`https://transit.haroldpoi.dev/v1/lines/${encodeURIComponent(selected.line)}`)
+        .then((data) => {
+          if (selectedBusRoute !== currentSelection || !busPopup) return;
+          const liveVehicle = data.vehicles?.find((item) => String(item.id) === String(selected.id));
+          busPopup.setDOMContent(busPopupContent(selected, currentSelection.variant, currentSelection.lineData, liveVehicle));
+        }).catch(() => {});
+    } else if (selectedBusRoute) clearBusSelection();
     const time = new Date(feed.updated_at * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
     busFeedStatus.textContent = `${features.length} recent positions · feed updated ${time} · community OASA source`;
   } catch (error) {
+    nearbyBuses = new Map();
+    clearBusSelection();
     map.getSource('live-buses').setData({ type: 'FeatureCollection', features: [] });
     busModelLayer?.setVehicles([]);
     busFeedStatus.textContent = `Live buses unavailable: ${error.message}`;
@@ -371,7 +592,7 @@ busToggle.addEventListener('change', () => {
   if (map.getLayer('live-bus-icon')) map.setLayoutProperty('live-bus-icon', 'visibility', busModelLayer ? 'none' : visibility);
   if (busModelLayer) { busModelLayer.visible = busToggle.checked; map.triggerRepaint(); }
   if (busToggle.checked) refreshBuses();
-  else busFeedStatus.textContent = 'Community OASA feed · switch on to load positions';
+  else { clearBusSelection(); busFeedStatus.textContent = 'Community OASA feed · switch on to load positions'; }
 });
 setInterval(refreshBuses, 60000);
 

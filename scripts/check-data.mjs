@@ -3,6 +3,8 @@ import { readFileSync } from 'node:fs';
 
 for (const [file, geometry] of [
   ['kifisia-bus-stops.geojson', 'Point'],
+  ['kifisia-metro-line1.geojson', 'MultiLineString'],
+  ['kifisia-metro-stations.geojson', 'Point'],
   ['kifisia-cycleways-centre.geojson', 'LineString'],
   ['kifisia-rivers.geojson', ['LineString', 'MultiLineString']],
   ['kifisia-flood-100.geojson', ['Polygon', 'MultiPolygon']],
