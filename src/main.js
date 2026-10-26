@@ -1,4 +1,5 @@
 import * as maplibregl from 'maplibre-gl';
+import { createBusLayer } from './bus-layer.js';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';
@@ -13,6 +14,7 @@ const places = {
 
 const status = document.querySelector('#map-status');
 const selection = document.querySelector('#selection-content');
+let busModelLayer;
 const layerVisibility = (toggle) => document.querySelector(`#${toggle}`).checked ? 'visible' : 'none';
 const map = new maplibregl.Map({
   container: 'map',
@@ -166,14 +168,15 @@ map.on('load', async () => {
   try {
     const busImage = await map.loadImage(`${import.meta.env.BASE_URL}bus-3d.png`);
     map.addImage('bus-3d', busImage.data);
-    map.setPaintProperty('live-buses', 'circle-opacity', 0);
-    map.setPaintProperty('live-buses', 'circle-stroke-opacity', 0);
     map.addLayer({
       id: 'live-bus-icon', type: 'symbol', source: 'live-buses',
+      filter: ['has', 'heading'],
       layout: { visibility: layerVisibility('buses-toggle'), 'icon-image': 'bus-3d',
-        'icon-size': ['interpolate', ['linear'], ['zoom'], 11, 0.09, 16, 0.25],
-        'icon-anchor': 'bottom', 'icon-allow-overlap': true },
+        'icon-size': ['interpolate', ['linear'], ['zoom'], 11, 0.08, 16, 0.22],
+        'icon-anchor': 'center', 'icon-rotation-alignment': 'map', 'icon-pitch-alignment': 'viewport',
+        'icon-rotate': ['get', 'heading'], 'icon-allow-overlap': true },
     });
+    map.setFilter('live-buses', ['!', ['has', 'heading']]);
   } catch (error) {
     console.warn('Bus icon unavailable; showing position dots.', error);
   }
@@ -181,6 +184,20 @@ map.on('load', async () => {
     id: 'live-bus-labels', type: 'symbol', source: 'live-buses', layout: { visibility: layerVisibility('buses-toggle'), 'text-field': ['get', 'line'], 'text-size': 11, 'text-offset': [0, -3] },
     paint: { 'text-color': '#173a56', 'text-halo-color': '#fff', 'text-halo-width': 1.5 },
   });
+  try {
+    busModelLayer = createBusLayer(map);
+    map.addLayer(busModelLayer, 'live-bus-labels');
+    if (map.getLayer('live-bus-icon')) map.setLayoutProperty('live-bus-icon', 'visibility', 'none');
+    busModelLayer.visible = document.querySelector('#buses-toggle').checked;
+  } catch (error) {
+    busModelLayer = null;
+    console.warn('3D buses unavailable; showing directional map icons.', error);
+  }
+  map.addLayer({
+    id: 'live-bus-hit', type: 'circle', source: 'live-buses',
+    layout: { visibility: layerVisibility('buses-toggle') },
+    paint: { 'circle-radius': 17, 'circle-opacity': 0, 'circle-stroke-opacity': 0 },
+  }, 'live-bus-labels');
   if (document.querySelector('#buses-toggle').checked) refreshBuses();
 
   try {
@@ -217,18 +234,30 @@ map.on('error', (event) => {
   if (event.error) status.textContent = `Map data unavailable: ${event.error.message}`;
 });
 
-function showSelection(title, detail, note) {
-  selection.replaceChildren();
+function selectionDetails(title, detail, note) {
+  const content = document.createElement('div');
   for (const [tag, className, value] of [['strong', 'selection__title', title], ['p', 'selection__detail', detail], ['p', 'selection__note', note]]) {
     const element = document.createElement(tag);
     element.className = className;
     element.textContent = value;
-    selection.append(element);
+    content.append(element);
   }
+  return content;
+}
+function showSelection(title, detail, note) { selection.replaceChildren(selectionDetails(title, detail, note)); }
+
+let buildingPopup;
+function showBuilding(event, title, detail, note) {
+  showSelection(title, detail, note);
+  buildingPopup = new maplibregl.Popup({ className: 'building-popup', closeOnClick: false, maxWidth: '260px', offset: 12 })
+    .setLngLat(event.lngLat)
+    .setDOMContent(selectionDetails(title, detail, note))
+    .addTo(map);
 }
 
 map.on('click', (event) => {
-  const layers = ['live-bus-icon', 'live-buses', 'landmarks', 'civic-pois', 'sports', 'building-types', 'arch-sites', 'playgrounds', 'parks', 'rivers', 'flood-100', 'contours', 'land-cover', 'bus-stops', 'cycleways-centre', 'kifisia-buildings'].filter((id) => map.getLayer(id));
+  buildingPopup?.remove();
+  const layers = ['live-bus-hit', 'live-bus-labels', 'live-bus-icon', 'live-buses', 'landmarks', 'civic-pois', 'sports', 'building-types', 'arch-sites', 'playgrounds', 'parks', 'rivers', 'flood-100', 'contours', 'land-cover', 'bus-stops', 'cycleways-centre', 'kifisia-buildings'].filter((id) => map.getLayer(id));
   const feature = map.queryRenderedFeatures(event.point, { layers })[0];
   if (!feature) return;
   if (['landmarks', 'civic-pois'].includes(feature.layer.id)) {
@@ -240,7 +269,7 @@ map.on('click', (event) => {
   } else if (feature.layer.id === 'sports') {
     showSelection(feature.properties.name || 'Mapped sports site', [feature.properties.facility, feature.properties.sport].filter(Boolean).join(' · '), 'OpenStreetMap snapshot · 26 Oct 2026. Facility access and availability may differ.');
   } else if (feature.layer.id === 'building-types') {
-    showSelection(feature.properties.name || 'Tagged building', `${feature.properties.category} · OSM building=${feature.properties.building_type}`, 'OpenStreetMap snapshot · 26 Oct 2026. Tag describes building type, not verified current use; height is approximate.');
+    showBuilding(event, feature.properties.name || 'Tagged building', `${feature.properties.category} · OSM building=${feature.properties.building_type}`, 'OpenStreetMap snapshot · 26 Oct 2026. Building type is not verified current use.');
   } else if (feature.layer.id === 'rivers') {
     showSelection('Mapped watercourse', feature.properties.name_en || 'Kifisos tributary', 'Athens GIS stream network · line does not describe flood risk');
   } else if (feature.layer.id === 'flood-100') {
@@ -251,14 +280,15 @@ map.on('click', (event) => {
     showSelection(feature.properties.class_2021, '2021 land cover and land use', 'Athens GIS · mapped class, not parcel zoning');
   } else if (feature.layer.id === 'bus-stops') {
     showSelection(feature.properties.name || 'Bus stop', `Routes: ${feature.properties.route_ref || 'Not listed'}`, 'OASA stops via Athens GIS · published 21 Oct 2026');
-  } else if (['live-bus-icon', 'live-buses'].includes(feature.layer.id)) {
+  } else if (['live-bus-hit', 'live-bus-labels', 'live-bus-icon', 'live-buses'].includes(feature.layer.id)) {
     const time = new Date(Number(feature.properties.position_at) * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-    showSelection(`Bus ${feature.properties.line}`, `Last position: ${time}`, 'Community OASA telematics feed · position may be delayed');
+    const heading = Number(feature.properties.heading);
+    showSelection(`Bus ${feature.properties.line}`, `Last position: ${time}${Number.isFinite(heading) && feature.properties.heading !== undefined ? ` · heading ${Math.round(heading)}°` : ''}`, 'Community OASA telematics feed · position and heading may be delayed');
   } else if (feature.layer.id === 'cycleways-centre') {
     showSelection(feature.properties.name || 'Mapped bike facility', feature.properties.facility, 'OpenStreetMap way · Kifisia centre extract, 25 Oct 2026');
   } else {
     const height = Number(feature.properties.render_height);
-    showSelection(feature.properties.name || 'Mapped building', Number.isFinite(height) && height > 0 ? `Mapped height: ${height.toFixed(1)} m` : 'No mapped height available', 'OpenFreeMap / OpenMapTiles. Heights may be estimated.');
+    showBuilding(event, feature.properties.name || 'Mapped building', Number.isFinite(height) && height > 0 ? `Mapped height: ${height.toFixed(1)} m` : 'No mapped height available', 'OpenFreeMap / OpenMapTiles. Heights may be estimated.');
   }
 });
 
@@ -322,19 +352,24 @@ async function refreshBuses() {
       now - bus.position_at <= 300 && bus.position_at <= now + 30
     ).map((bus) => ({
       type: 'Feature', geometry: { type: 'Point', coordinates: [bus.lon, bus.lat] },
-      properties: { line: bus.line, position_at: bus.position_at },
+      properties: { line: bus.line, position_at: bus.position_at,
+        ...(Number.isFinite(bus.bearing) && bus.bearing >= 0 && bus.bearing < 360 ? { heading: bus.bearing } : {}) },
     }));
     map.getSource('live-buses').setData({ type: 'FeatureCollection', features });
+    busModelLayer?.setVehicles(features);
     const time = new Date(feed.updated_at * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
     busFeedStatus.textContent = `${features.length} recent positions · feed updated ${time} · community OASA source`;
   } catch (error) {
     map.getSource('live-buses').setData({ type: 'FeatureCollection', features: [] });
+    busModelLayer?.setVehicles([]);
     busFeedStatus.textContent = `Live buses unavailable: ${error.message}`;
   }
 }
 busToggle.addEventListener('change', () => {
   const visibility = busToggle.checked ? 'visible' : 'none';
-  for (const layer of ['live-buses', 'live-bus-icon', 'live-bus-labels']) if (map.getLayer(layer)) map.setLayoutProperty(layer, 'visibility', visibility);
+  for (const layer of ['live-buses', 'live-bus-hit', 'live-bus-labels']) if (map.getLayer(layer)) map.setLayoutProperty(layer, 'visibility', visibility);
+  if (map.getLayer('live-bus-icon')) map.setLayoutProperty('live-bus-icon', 'visibility', busModelLayer ? 'none' : visibility);
+  if (busModelLayer) { busModelLayer.visible = busToggle.checked; map.triggerRepaint(); }
   if (busToggle.checked) refreshBuses();
   else busFeedStatus.textContent = 'Community OASA feed · switch on to load positions';
 });

@@ -110,6 +110,8 @@ h2 { font-size: 13px; letter-spacing: .01em; margin: 0; font-weight: 700; }
 .maplibregl-ctrl-top-right { top: 18px; right: 17px; }
 .maplibregl-ctrl-group { border-radius: 0; box-shadow: 0 2px 9px #1a302119; }
 .maplibregl-ctrl-attrib { font-family: 'DM Mono', monospace; }
+.building-popup .maplibregl-popup-content { min-width: 185px; padding: 14px 26px 13px 15px; border: 1px solid #aebcae; border-radius: 2px; background: #f8f6ec; color: #20362c; box-shadow: 0 7px 24px #18322640; }
+.building-popup .maplibregl-popup-close-button { color: #476454; font-size: 18px; padding: 2px 7px; }
 @media (max-width: 760px) {
   .app { display: flex; flex-direction: column; height: 100dvh; min-height: 0; }
   .sidebar { max-height: 42dvh; overflow: auto; flex: none; }

@@ -63,7 +63,7 @@ Run `powershell -ExecutionPolicy Bypass -File scripts/prepare-flood.ps1` to refr
 
 ## Design
 
-The map is the product. A compact side panel gives context, district shortcuts, layer switches, source links and details for selected features. The interface draws on the inspectable-building approach of the [Helsinki 3D urban data model](https://www.hel.fi/en/decision-making/information-on-helsinki/maps-and-geospatial-data/helsinki-3d). The live bus switch adds a small ARGOS-like moving layer without disguising its community provenance or age. The bus symbol follows the white-and-blue appearance of local OASA vehicles; the live feed does not identify each vehicle's make or model.
+The map is the product. A compact side panel gives context, district shortcuts, layer switches, source links and details for selected features. The interface draws on the inspectable-building approach of the [Helsinki 3D urban data model](https://www.hel.fi/en/decision-making/information-on-helsinki/maps-and-geospatial-data/helsinki-3d). The live bus switch adds a small ARGOS-like moving layer without disguising its community provenance or age. Procedural 3D buses sit on the map plane at the feed's reported coordinates, with their fronts turned to the reported bearing (clockwise from north). Their white, blue and yellow scheme follows local OASA vehicles. Models are enlarged at city zoom for legibility, so their size is not a measurement. A vehicle without a bearing appears as a dot. The live feed does not identify each vehicle's make or model, and a stopped bus may retain an older bearing. The earlier `bus-3d.svg`/PNG serves as a fallback if 3D rendering is unavailable.
 
 ## Code map
 

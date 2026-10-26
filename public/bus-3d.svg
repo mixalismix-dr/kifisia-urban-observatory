@@ -1,20 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="112" height="84" viewBox="0 0 112 84">
-  <ellipse cx="54" cy="70" rx="49" ry="8" fill="#102a38" opacity=".22"/>
-  <path d="M10 27 73 12 101 27 38 43Z" fill="#fffdf8" stroke="#aec2cc" stroke-width="1.5"/>
-  <path d="M10 27 38 43v25L10 52Z" fill="#dce7eb" stroke="#6a91a5" stroke-width="1.5"/>
-  <path d="M38 43 101 27v25L38 68Z" fill="#f6f8f4" stroke="#6a91a5" stroke-width="1.5"/>
-  <path d="M42 45 97 31v13L42 58Z" fill="#223e4c"/>
-  <path d="M48 43v14m15-18v14m15-18v14m14-18v14" stroke="#b1c8ce" stroke-width="2"/>
-  <path d="M14 32 34 44v12L14 45Z" fill="#223e4c"/>
-  <path d="M10 47 38 63v5L10 52Zm28 13 63-16v8L38 68Z" fill="#146ca7"/>
-  <path d="M42 62 96 48" stroke="#8dc8da" stroke-width="2"/>
-  <path d="M45 66 94 54" stroke="#a7b6b6" stroke-width="1.5"/>
-  <path d="M19 32 34 41" stroke="#e6f5f6" stroke-width="2" opacity=".6"/>
-  <path d="M66 16 83 25" stroke="#c3d4d7" stroke-width="2"/>
-  <rect x="75" y="24" width="14" height="5" rx="1" transform="rotate(-15 75 24)" fill="#e9bc4b"/>
-  <path d="M14 51v3l6 3v-3Zm16 9v3l6 3v-3Z" fill="#f8d373"/>
-  <ellipse cx="55" cy="64" rx="5" ry="6" fill="#203039"/>
-  <ellipse cx="55" cy="64" rx="2.3" ry="3" fill="#a9bcc2"/>
-  <ellipse cx="87" cy="56" rx="5" ry="6" fill="#203039"/>
-  <ellipse cx="87" cy="56" rx="2.3" ry="3" fill="#a9bcc2"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="84" height="128" viewBox="0 0 84 128">
+  <!-- Front faces north so the live bearing can rotate the whole vehicle. -->
+  <ellipse cx="42" cy="67" rx="35" ry="56" fill="#182b3a" opacity=".18"/>
+  <path d="M21 12Q21 6 28 6H56Q63 6 63 12L67 108Q67 116 60 119H24Q17 116 17 108Z" fill="#e8eceb" stroke="#375264" stroke-width="2"/>
+  <path d="M17 23 21 18v91l-4 2Z" fill="#778f9d"/>
+  <path d="M63 18 67 23v88l-4-2Z" fill="#59798e"/>
+  <path d="M21 13Q21 10 27 10H57Q63 10 63 13V107Q63 114 57 115H27Q21 114 21 107Z" fill="#f9faf5" stroke="#9cb0b8" stroke-width="1.5"/>
+  <path d="M24 21Q24 17 28 17H56Q60 17 60 21L59 36H25Z" fill="#233d50"/>
+  <path d="M27 20H57L56 22H28Z" fill="#7397aa" opacity=".8"/>
+  <path d="M32 12H52V17H32Z" fill="#182c3b"/>
+  <path d="M34 13H50V15H34Z" fill="#f2c44f"/>
+  <path d="M22 42H27V88H22Zm35 0h5v46h-5Z" fill="#24475c"/>
+  <path d="M22 43H27V48H22Zm35 0h5v5h-5Z" fill="#90afbb"/>
+  <path d="M17 56H21V99H17Zm46 0h4v43h-4Z" fill="#126aa5"/>
+  <path d="M17 91 21 84v10l-4 7Zm46-7 4 7v10l-4-7Z" fill="#e6b842"/>
+  <path d="M24 105H60V110Q59 113 56 113H28Q25 113 24 110Z" fill="#2169a0"/>
+  <path d="M27 108H34M50 108H57" stroke="#f3cf62" stroke-width="2" stroke-linecap="round"/>
+  <rect x="32" y="46" width="20" height="16" rx="3" fill="#e5e9e6" stroke="#bac8cb"/>
+  <rect x="35" y="49" width="14" height="10" rx="2" fill="#ccd8d9"/>
+  <rect x="34" y="70" width="16" height="21" rx="3" fill="#e7ece9" stroke="#c5d0d0"/>
+  <path d="M28 96H56" stroke="#ced9d8" stroke-width="2"/>
+  <path d="M24 18H28M56 18H60" stroke="#f6d77d" stroke-width="3" stroke-linecap="round"/>
 </svg>
