@@ -55,7 +55,7 @@ export function setupSunPreview(map) {
   const status = document.querySelector('#sun-status');
   day.value = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Athens', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
   map.addSource('sun-shadows', { type: 'geojson', data: empty,
-    attribution: '© OpenStreetMap contributors; Copernicus Urban Atlas Building Block Height 2021' });
+    attribution: 'Copernicus Urban Atlas BBH 2021' });
   map.addLayer({ id: 'sun-shadows', type: 'fill', source: 'sun-shadows', layout: { visibility: 'none' },
     paint: { 'fill-color': '#34465c', 'fill-opacity': 0.24 } }, 'kifisia-buildings');
 
