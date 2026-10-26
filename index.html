@@ -25,6 +25,12 @@
 
           <section class="section" aria-labelledby="district-heading">
             <div class="section__head"><span>01</span><h2 id="district-heading">Explore a district</h2></div>
+            <div class="place-search">
+              <label for="place-search-input">Find a place or street</label>
+              <input id="place-search-input" type="search" autocomplete="off" placeholder="Street, address, park…" aria-controls="place-search-results" />
+              <ul id="place-search-results" aria-live="polite"></ul>
+              <p id="place-search-note">OSM street and mapped address snapshot · 26 Oct 2026</p>
+            </div>
             <div class="places" role="group" aria-label="Map locations">
               <button class="place is-active" data-place="kifisia" type="button"><span>Κηφισιά</span><span>Kifisia <b aria-hidden="true">↗</b></span></button>
               <button class="place" data-place="nea-erythraia" type="button"><span>Νέα Ερυθραία</span><span>Nea Erythraia <b aria-hidden="true">↗</b></span></button>

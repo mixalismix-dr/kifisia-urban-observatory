@@ -23,6 +23,15 @@ h1 span { display: block; font-size: 12px; font-weight: 500; letter-spacing: .02
 .section__head span { font-size: 11px; color: #8a9a8d; }
 h2 { font-size: 13px; letter-spacing: .01em; margin: 0; font-weight: 700; }
 .places { border-top: 1px solid #e0e3d8; }
+.place-search { margin-bottom: 16px; }
+.place-search label { display: block; margin-bottom: 6px; font-size: 11px; font-weight: 700; }
+.place-search input { width: 100%; padding: 10px 11px; border: 1px solid #b9c9b9; border-radius: 0; background: #fbfaf3; color: #20362c; font-size: 12px; }
+.place-search input:focus-visible { outline: 2px solid #3d7052; outline-offset: 2px; }
+.place-search ul { list-style: none; padding: 0; margin: 0; max-height: 225px; overflow: auto; }
+.place-search li button { width: 100%; display: flex; justify-content: space-between; gap: 8px; padding: 8px 5px; border: 0; border-bottom: 1px solid #dfe5dc; background: #fbfaf3; text-align: left; color: #274333; font-size: 11px; }
+.place-search li button:hover, .place-search li button:focus-visible { background: #e2eadc; }
+.place-search li button span:last-child { flex: none; color: #718575; font: 9px 'DM Mono', monospace; }
+.place-search p { margin: 6px 0 0; color: #788779; font: 9px/1.4 'DM Mono', monospace; }
 .place { border: 0; border-bottom: 1px solid #e0e3d8; padding: 12px 9px; width: 100%; text-align: left; background: transparent; color: #2a3e31; display: flex; align-items: center; justify-content: space-between; gap: 7px; }
 .place > span:first-child { font-size: 15px; font-weight: 600; }
 .place > span:last-child { font-size: 10px; color: #7a8d80; white-space: nowrap; }

@@ -13,6 +13,51 @@ const places = {
   'nea-erythraia': [23.8173613, 38.0882121],
   ekali: [23.8425642, 38.1068395],
 };
+const searchInput = document.querySelector('#place-search-input');
+const searchResults = document.querySelector('#place-search-results');
+const searchNote = document.querySelector('#place-search-note');
+const searchKey = (value) => value.toLocaleLowerCase('el').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ς/g, 'σ');
+let searchItems = [];
+let searchPopup;
+fetch(`${import.meta.env.BASE_URL}data/kifisia-search.json`)
+  .then((response) => { if (!response.ok) throw new Error(`HTTP ${response.status}`); return response.json(); })
+  .then((items) => { searchItems = items.map((item) => ({ ...item, key: searchKey(item.name) })); searchInput.dispatchEvent(new Event('input')); })
+  .catch(() => { searchNote.textContent = 'Place search unavailable'; });
+searchInput.addEventListener('input', () => {
+  searchResults.replaceChildren();
+  const query = searchKey(searchInput.value.trim());
+  if (query.length < 2) return;
+  const matches = searchItems.filter((item) => item.key.includes(query)).slice(0, 7);
+  for (const item of matches) {
+    const row = document.createElement('li');
+    const button = document.createElement('button');
+    button.type = 'button';
+    const title = document.createElement('span');
+    title.textContent = item.name;
+    const kind = document.createElement('span');
+    kind.textContent = item.kind;
+    button.append(title, kind);
+    button.addEventListener('click', () => {
+      searchInput.value = item.name;
+      searchResults.replaceChildren();
+      searchPopup?.remove();
+      map.flyTo({ center: item.point, zoom: 17, pitch: 52, duration: 900 });
+      searchPopup = new maplibregl.Popup({ closeOnClick: true, offset: 12 })
+        .setLngLat(item.point).setDOMContent(selectionDetails(item.name, item.kind, 'Mapped location; verify exact access and address locally')).addTo(map);
+    });
+    row.append(button);
+    searchResults.append(row);
+  }
+  if (!matches.length) {
+    const row = document.createElement('li');
+    row.textContent = 'No mapped match';
+    searchResults.append(row);
+  }
+});
+searchInput.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter') { event.preventDefault(); searchResults.querySelector('button')?.click(); }
+  if (event.key === 'Escape') { searchResults.replaceChildren(); searchInput.blur(); }
+});
 const localBounds = [[23.71, 38.02], [23.94, 38.16]];
 
 const status = document.querySelector('#map-status');

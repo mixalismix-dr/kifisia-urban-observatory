@@ -73,6 +73,8 @@ Run `node scripts/prepare-metro.mjs` to refresh the Athens GIS Line 1 track and 
 
 The map is the product. A compact side panel gives context, district shortcuts, layer switches, source links and details for selected features. The interface draws on the inspectable-building approach of the [Helsinki 3D urban data model](https://www.hel.fi/en/decision-making/information-on-helsinki/maps-and-geospatial-data/helsinki-3d). The live bus switch adds a small ARGOS-like moving layer without disguising its community provenance or age. Procedural 3D buses sit on the map plane at the feed's reported coordinates, with their fronts turned to the reported bearing (clockwise from north). Their white, blue and yellow scheme follows local OASA vehicles. Models are enlarged at city zoom for legibility, so their size is not a measurement. A vehicle without a bearing appears as a dot. The live feed does not identify each vehicle's make or model, and a stopped bus may retain an older bearing. The earlier `bus-3d.svg`/PNG serves as a fallback if 3D rendering is unavailable.
 
+The sidebar search uses a committed local index of 1,067 Kifisia locations: 765 named OSM streets, 189 distinct mapped OSM addresses, and selected named parks, civic places, landmarks, sports sites, historic sites and Kifissia station. Search matches Greek text with or without accents. Street results use a representative point from the longest mapped segment; address locations reflect OSM mapping and may be incomplete. The search makes no external geocoding requests. Refresh the index with `powershell -ExecutionPolicy Bypass -File scripts/prepare-search.ps1` on a machine with QGIS 3.40.9 and Node.js. The script refreshes the Geofabrik OSM extract if it is missing, clips streets and address points to the municipal boundary, then runs `scripts/build-search-index.mjs`.
+
 ## Code map
 
 - `src/main.js`: map setup and interactions.
@@ -81,6 +83,7 @@ The map is the product. A compact side panel gives context, district shortcuts, 
 - `scripts/fetch-boundary.mjs`: reproducible boundary download.
 - `scripts/prepare-open-data.ps1`: reproducible tree-cover and bus-stop clipping.
 - `scripts/prepare-greenery.py`: reproducible canopy-form extraction from modeled heights and tree cover.
+- `scripts/prepare-search.ps1`: local OSM street and address extraction for search.
 - `scripts/prepare-cycleways.ps1`: reproducible OSM bike-facility extraction for Kifisia centre.
 - `scripts/prepare-atlas.ps1`: reproducible Athens GIS and Copernicus terrain extract.
 - `scripts/prepare-flood.ps1`: reproducible Attica Water Directorate flood-plan extract.

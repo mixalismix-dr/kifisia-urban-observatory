@@ -39,6 +39,12 @@ assert.ok(Math.abs(terminal[0] - 23.808219792) < 0.001 && Math.abs(terminal[1] -
   'Line 1 must start at Kifissia for the train model');
 assert.ok(nextRailPoint[1] < terminal[1], 'Line 1 must point south from Kifissia');
 
+const search = JSON.parse(readFileSync(new URL('../public/data/kifisia-search.json', import.meta.url), 'utf8'));
+assert.ok(search.length > 1000);
+assert.ok(search.some((item) => item.kind === 'Street') && search.some((item) => item.kind === 'Mapped address'));
+assert.ok(search.every((item) => item.name && item.point.length === 2 &&
+  item.point[0] >= 23.76 && item.point[0] <= 23.89 && item.point[1] >= 38.05 && item.point[1] <= 38.13));
+
 for (const file of ['data/kifisia-tree-cover.png', 'data/kifisia-dsm.png', 'bus-3d.png']) {
   const png = readFileSync(new URL(`../public/${file}`, import.meta.url));
   assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
