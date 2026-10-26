@@ -177,6 +177,10 @@ map.on('load', async () => {
     ],
   });
   map.addLayer({ id: 'tree-cover', type: 'raster', source: 'tree-cover', layout: { visibility: layerVisibility('trees-toggle') }, paint: { 'raster-opacity': 0.72 } }, 'kifisia-buildings');
+  map.addSource('ndvi', { type: 'image', url: `${import.meta.env.BASE_URL}data/kifisia-ndvi.png`,
+    coordinates: [[23.7677541, 38.1225421], [23.8844901, 38.1225421], [23.8844901, 38.0604421], [23.7677541, 38.0604421]] });
+  map.addLayer({ id: 'ndvi', type: 'raster', source: 'ndvi', layout: { visibility: layerVisibility('ndvi-toggle') },
+    paint: { 'raster-opacity': 0.78, 'raster-resampling': 'nearest' } }, 'kifisia-buildings');
 
   map.addSource('flood-100', { type: 'geojson', data: localData('flood-100'), attribution: 'Attica Water Directorate · flood-risk plan, first revision' });
   map.addLayer({
@@ -188,6 +192,7 @@ map.on('load', async () => {
   for (const [name, toggle, type, paint] of [
     ['sports', 'sports-toggle', 'fill', { 'fill-color': '#b86a53', 'fill-opacity': 0.72, 'fill-outline-color': '#713e38' }],
     ['parks', 'parks-toggle', 'fill', { 'fill-color': '#4d9868', 'fill-opacity': 0.46, 'fill-outline-color': '#25704d' }],
+    ['public-spaces', 'public-toggle', 'fill', { 'fill-color': ['match', ['get', 'category'], 'Park', '#4d9868', 'Playground', '#dca953', '#86a97e'], 'fill-opacity': 0.42, 'fill-outline-color': '#37654b' }],
     ['playgrounds', 'playgrounds-toggle', 'fill', { 'fill-color': '#dca953', 'fill-opacity': 0.75, 'fill-outline-color': '#a66a21' }],
     ['arch-sites', 'heritage-toggle', 'fill', { 'fill-color': '#9b6b91', 'fill-opacity': 0.73, 'fill-outline-color': '#6f4267' }],
     ['rivers', 'water-toggle', 'line', { 'line-color': '#348fbb', 'line-width': 3, 'line-opacity': 0.9 }],
@@ -195,6 +200,11 @@ map.on('load', async () => {
     map.addSource(name, { type: 'geojson', data: localData(name), attribution: name === 'sports' ? '© OpenStreetMap contributors · Geofabrik extract, 26 Oct 2026' : 'Athens GIS open data' });
     map.addLayer({ id: name, type, source: name, layout: { visibility: layerVisibility(toggle) }, paint }, labelLayer);
   }
+  map.addSource('parcels', { type: 'geojson', data: emptyFeatures(), attribution: 'Πηγή δεδομένων: Ν.Π.Δ. ΕΛΛΗΝΙΚΟ ΚΤΗΜΑΤΟΛΟΓΙΟ · 22 Oct 2026' });
+  map.addLayer({ id: 'parcels-fill', type: 'fill', source: 'parcels', minzoom: 16,
+    layout: { visibility: layerVisibility('parcels-toggle') }, paint: { 'fill-color': '#765d8d', 'fill-opacity': 0.035 } }, labelLayer);
+  map.addLayer({ id: 'parcels-outline', type: 'line', source: 'parcels', minzoom: 16,
+    layout: { visibility: layerVisibility('parcels-toggle') }, paint: { 'line-color': '#765d8d', 'line-width': 1.2, 'line-opacity': 0.8 } }, labelLayer);
   for (const [name, toggle, color, radius] of [
     ['civic-pois', 'civic-toggle', '#4d5e81', 5],
     ['landmarks', 'landmarks-toggle', '#9b5471', 7],
@@ -297,6 +307,11 @@ map.on('load', async () => {
     layout: { visibility: layerVisibility('stops-toggle') },
     paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 3, 16, 6], 'circle-color': '#f5f5ee', 'circle-stroke-color': '#214e74', 'circle-stroke-width': 2 },
   });
+  map.addSource('traffic-lights', { type: 'geojson', data: localData('traffic-lights'), attribution: 'Athens GIS · mapped traffic signals' });
+  map.addLayer({ id: 'traffic-lights', type: 'circle', source: 'traffic-lights', minzoom: 13,
+    layout: { visibility: layerVisibility('signals-toggle') },
+    paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, 4, 17, 7],
+      'circle-color': '#d6a84f', 'circle-stroke-color': '#694d29', 'circle-stroke-width': 1.5 } }, labelLayer);
   map.addSource('live-buses', { type: 'geojson', data: { type: 'FeatureCollection', features: [] }, attribution: 'OASA telematics via community feed' });
   map.addLayer({
     id: 'live-buses', type: 'circle', source: 'live-buses', layout: { visibility: layerVisibility('buses-toggle') },
@@ -647,7 +662,7 @@ map.on('click', (event) => {
   buildingPopup?.remove();
   clearBusSelection();
   railPopup?.remove();
-  const layers = ['live-bus-hit', 'live-bus-labels', 'live-bus-icon', 'live-buses', 'municipal-closures-points', 'municipal-works-points', 'municipal-works-lines', 'train-model-hit', 'metro-stations', 'landmarks', 'civic-pois', 'sports', 'canopy-forms-hit', 'building-types', 'arch-sites', 'playgrounds', 'parks', 'rivers', 'flood-100', 'contours', 'land-cover', 'bus-stops', 'cycleways-centre', 'kifisia-buildings'].filter((id) => map.getLayer(id));
+  const layers = ['live-bus-hit', 'live-bus-labels', 'live-bus-icon', 'live-buses', 'municipal-closures-points', 'municipal-works-points', 'municipal-works-lines', 'train-model-hit', 'metro-stations', 'landmarks', 'civic-pois', 'traffic-lights', 'parcels-fill', 'sports', 'canopy-forms-hit', 'building-types', 'arch-sites', 'playgrounds', 'parks', 'public-spaces', 'rivers', 'flood-100', 'contours', 'land-cover', 'bus-stops', 'cycleways-centre', 'kifisia-buildings'].filter((id) => map.getLayer(id));
   const hits = map.queryRenderedFeatures(event.point, { layers });
   const feature = layers.map((id) => hits.find((hit) => hit.layer.id === id)).find(Boolean);
   if (!feature) return;
@@ -665,6 +680,14 @@ map.on('click', (event) => {
     showSelection(feature.properties.name || feature.properties.name_en || 'Mapped historic site', feature.properties.historic || 'Historic feature', 'Athens GIS archaeological-sites layer');
   } else if (['parks', 'playgrounds'].includes(feature.layer.id)) {
     showSelection(feature.properties.name || (feature.layer.id === 'parks' ? 'Mapped park' : 'Mapped playground'), feature.layer.id === 'parks' ? 'Park or public green space' : 'Playground', 'Athens GIS open data · mapped extent may be incomplete');
+  } else if (feature.layer.id === 'public-spaces') {
+    showBuilding(event, feature.properties.name || `Mapped ${feature.properties.category.toLowerCase()}`, feature.properties.category,
+      'Athens GIS open data · access and ownership may be unverified');
+  } else if (feature.layer.id === 'traffic-lights') {
+    showBuilding(event, 'Mapped traffic light', 'Signal location', 'Athens GIS snapshot · 26 Oct 2026. No live signal phase or operating status.');
+  } else if (feature.layer.id === 'parcels-fill') {
+    showBuilding(event, `ΚΑΕΚ ${feature.properties.KAEK}`, `Source record date ${feature.properties.bLfSpnVr || 'unavailable'}`,
+      'Πηγή δεδομένων: Ν.Π.Δ. ΕΛΛΗΝΙΚΟ ΚΤΗΜΑΤΟΛΟΓΙΟ · 22 Oct 2026 snapshot. Parcel identifier only; no ownership data.');
   } else if (feature.layer.id === 'sports') {
     showSelection(feature.properties.name || 'Mapped sports site', [feature.properties.facility, feature.properties.sport].filter(Boolean).join(' · '), 'OpenStreetMap snapshot · 26 Oct 2026. Facility access and availability may differ.');
   } else if (feature.layer.id === 'canopy-forms-hit') {
@@ -762,18 +785,47 @@ document.querySelector('#boundary-toggle').addEventListener('change', (event) =>
 });
 
 for (const [input, layers] of [
-  ['trees-toggle', ['tree-cover']], ['roads-toggle', ['main-roads']],
+  ['trees-toggle', ['tree-cover']], ['ndvi-toggle', ['ndvi']], ['roads-toggle', ['main-roads']],
   ['bike-toggle', ['cycleways', 'cycleways-centre']], ['stops-toggle', ['bus-stops']],
   ['landuse-toggle', ['land-cover']], ['dsm-toggle', ['dsm']], ['contours-toggle', ['contours']],
   ['flood-toggle', ['flood-100']], ['sports-toggle', ['sports']],
-  ['parks-toggle', ['parks']], ['playgrounds-toggle', ['playgrounds']], ['heritage-toggle', ['arch-sites']],
-  ['water-toggle', ['rivers']], ['civic-toggle', ['civic-pois']], ['landmarks-toggle', ['landmarks']],
+  ['parks-toggle', ['parks']], ['public-toggle', ['public-spaces']], ['playgrounds-toggle', ['playgrounds']], ['heritage-toggle', ['arch-sites']],
+  ['water-toggle', ['rivers']], ['civic-toggle', ['civic-pois']], ['landmarks-toggle', ['landmarks']], ['signals-toggle', ['traffic-lights']],
   ['walking-toggle', ['walking-paths']],
 ]) {
   document.querySelector(`#${input}`).addEventListener('change', (event) => {
     for (const layer of layers) if (map.getLayer(layer)) map.setLayoutProperty(layer, 'visibility', event.target.checked ? 'visible' : 'none');
   });
 }
+for (const [input, other, layer] of [['ndvi-toggle', 'trees-toggle', 'tree-cover'], ['trees-toggle', 'ndvi-toggle', 'ndvi']]) {
+  document.querySelector(`#${input}`).addEventListener('change', (event) => {
+    if (!event.target.checked) return;
+    document.querySelector(`#${other}`).checked = false;
+    if (map.getLayer(layer)) map.setLayoutProperty(layer, 'visibility', 'none');
+  });
+}
+let parcelData;
+document.querySelector('#parcels-toggle').addEventListener('change', async (event) => {
+  const visible = event.target.checked;
+  for (const layer of ['parcels-fill', 'parcels-outline']) {
+    if (map.getLayer(layer)) map.setLayoutProperty(layer, 'visibility', visible ? 'visible' : 'none');
+  }
+  if (!visible || !map.getSource('parcels')) return;
+  const label = document.querySelector('#parcels-status');
+  if (parcelData) return;
+  label.textContent = 'Loading the Kifisia parcel snapshot…';
+  try {
+    parcelData = await fetchJson(`${import.meta.env.BASE_URL}data/kifisia-parcels.geojson`);
+    map.getSource('parcels').setData(parcelData);
+    label.textContent = `${parcelData.features.length.toLocaleString('en-US')} mapped parcels · visible from zoom 16`;
+  } catch (error) {
+    label.textContent = `Parcel data unavailable: ${error.message}`;
+  }
+});
+map.on('load', () => {
+  const toggle = document.querySelector('#parcels-toggle');
+  if (toggle.checked) toggle.dispatchEvent(new Event('change'));
+});
 for (const name of ['works', 'closures']) {
   document.querySelector(`#${name}-toggle`).addEventListener('change', (event) => {
     const visibility = event.target.checked ? 'visible' : 'none';

@@ -62,6 +62,9 @@
             <label class="layer"><span><i class="swatch swatch--boundary"></i>Municipal boundary</span><input id="boundary-toggle" type="checkbox" checked /><span class="switch" aria-hidden="true"></span></label>
             <label class="layer"><span><i class="swatch swatch--trees"></i>Tree cover density</span><input id="trees-toggle" type="checkbox" checked /><span class="switch" aria-hidden="true"></span></label>
             <p class="layer-note">Copernicus · 2024 reference year · 10 m source pixels · crown cover 1–100%</p>
+            <label class="layer"><span><i class="swatch swatch--ndvi"></i>Vegetation index · NDVI</span><input id="ndvi-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+            <p class="layer-note"><a href="https://earth-search.aws.element84.com/v1/collections/sentinel-2-l2a/items/S2B_34SGH_20260911_0_L2A" target="_blank" rel="noopener noreferrer">Sentinel-2 scene ↗</a> · 11 Sep 2026 · 10 m pixels · cloud masked. Greener means stronger vegetation signal, not plant health.</p>
+            <div class="ndvi-key" aria-label="NDVI color scale from minus 0.2 to 1"><span>−0.2</span><i></i><span>1.0</span></div>
             <label class="layer"><span><i class="swatch swatch--greenery"></i>3D greenery</span><input id="greenery-toggle" type="checkbox" checked /><span class="switch" aria-hidden="true"></span></label>
             <p class="layer-note" id="greenery-status">Loading modeled canopy forms…</p>
             <div class="density-key" aria-label="Tree cover color scale from 1 to 100 percent"><span>1%</span><i></i><span>100%</span></div>
@@ -74,6 +77,8 @@
             <p class="layer-note">OSM paths across map; mapped tracks and lanes in Kifisia centre · 25 Oct 2026</p>
             <label class="layer"><span><i class="swatch swatch--stops"></i>Bus stops <small>264</small></span><input id="stops-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
             <p class="layer-note">OASA via Athens GIS · published 21 Oct 2026</p>
+            <label class="layer"><span><i class="swatch swatch--signals"></i>Traffic lights <small>92</small></span><input id="signals-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+            <p class="layer-note">Athens GIS mapped signal positions · snapshot 26 Oct 2026. No live signal status.</p>
             <label class="layer"><span><i class="swatch swatch--buses"></i>Live buses</span><input id="buses-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
             <p class="layer-note" id="bus-feed-status">Community OASA feed · switch on to load positions</p>
             <p class="layer-note">3D buses sit at reported positions and face their reported heading. A dot means direction is missing. Models are enlarged for legibility.</p>
@@ -82,6 +87,8 @@
             <details class="layer-group" open>
               <summary>Landscape &amp; water</summary>
               <label class="layer"><span><i class="swatch swatch--parks"></i>Parks &amp; groves <small>118</small></span><input id="parks-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+              <label class="layer"><span><i class="swatch swatch--public"></i>Mapped public spaces <small>176</small></span><input id="public-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+              <p class="layer-note">Athens GIS parks, playgrounds, gardens and squares. Some access and ownership are unverified; select an area for its type.</p>
               <label class="layer"><span><i class="swatch swatch--water"></i>Rivers &amp; streams <small>11</small></span><input id="water-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <label class="layer"><span><i class="swatch swatch--flood"></i>100-year flood zone</span><input id="flood-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <p class="layer-note">Attica Water Directorate · modeled extent, first flood-plan revision · snapshot 25 Oct 2026. Not a live flood alert.</p>
@@ -102,6 +109,9 @@
               <p class="layer-note">OSM · 26 Oct 2026 · mapped pitches, stadiums, tracks and sports centers. Private pools excluded.</p>
               <label class="layer"><span><i class="swatch swatch--civic"></i>Schools &amp; services <small>80</small></span><input id="civic-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <p class="layer-note">Athens GIS / OSM snapshot · 25 Oct 2026. Select a feature for details.</p>
+              <label class="layer"><span><i class="swatch swatch--parcels"></i>ΚΑΕΚ parcels <small>19,140</small></span><input id="parcels-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+              <p class="layer-note">Hellenic Cadastre · 22 Oct 2026 snapshot. Zoom in and select a parcel for its ΚΑΕΚ. No ownership data. Source: <a href="https://data.gov.gr/dataset/geotemachia-oria-kai-kaek-ton-periochon-toy-leitoyrgoyntos-ktimatologioy" target="_blank" rel="noopener noreferrer">data.gov.gr ↗</a></p>
+              <p class="layer-note" id="parcels-status" role="status"></p>
             </details>
           </section>
 

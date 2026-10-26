@@ -11,6 +11,9 @@ for (const [file, geometry] of [
   ['kifisia-flood-100.geojson', ['Polygon', 'MultiPolygon']],
   ['kifisia-contours.geojson', 'LineString'],
   ['kifisia-parks.geojson', 'Polygon'],
+  ['kifisia-public-spaces.geojson', 'Polygon'],
+  ['kifisia-traffic-lights.geojson', 'Point'],
+  ['kifisia-parcels.geojson', ['Polygon', 'MultiPolygon', 'GeometryCollection']],
   ['kifisia-playgrounds.geojson', 'Polygon'],
   ['kifisia-arch-sites.geojson', 'Polygon'],
   ['kifisia-building-types.geojson', ['Polygon', 'MultiPolygon']],
@@ -48,6 +51,12 @@ assert.ok(search.every((item) => item.name && item.point.length === 2 &&
 const sunBuildings = JSON.parse(readFileSync(new URL('../public/data/kifisia-sun-buildings.geojson', import.meta.url), 'utf8')).features;
 assert.ok(sunBuildings.length > 17000 && sunBuildings.every((feature) => feature.properties.height_m > 0));
 assert.ok(sunBuildings.filter((feature) => feature.properties.basis === 'Athens GIS 2021').length > 15000);
+const parcels = JSON.parse(readFileSync(new URL('../public/data/kifisia-parcels.geojson', import.meta.url), 'utf8')).features;
+assert.ok(parcels.length > 19000 && parcels.every((feature) => /^[0-9ΕΚ]{12}$/.test(feature.properties.KAEK)));
+assert.ok(parcels.filter((feature) => feature.geometry.type === 'GeometryCollection').every((feature) =>
+  feature.geometry.geometries.some((geometry) => geometry.type === 'Polygon')));
+assert.equal(JSON.parse(readFileSync(new URL('../public/data/kifisia-public-spaces.geojson', import.meta.url), 'utf8')).features.length, 176);
+assert.equal(JSON.parse(readFileSync(new URL('../public/data/kifisia-traffic-lights.geojson', import.meta.url), 'utf8')).features.length, 92);
 
 assert.equal(athensTime('2026-01-15', 12).toISOString(), '2026-01-15T10:00:00.000Z');
 assert.equal(athensTime('2026-07-15', 12).toISOString(), '2026-07-15T09:00:00.000Z');
@@ -60,7 +69,7 @@ for (const photo of ['alsos', 'goulandris', 'kazouli']) {
   assert.equal(jpeg.subarray(0, 3).toString('hex'), 'ffd8ff');
 }
 
-for (const file of ['data/kifisia-tree-cover.png', 'data/kifisia-dsm.png', 'bus-3d.png']) {
+for (const file of ['data/kifisia-tree-cover.png', 'data/kifisia-ndvi.png', 'data/kifisia-dsm.png', 'bus-3d.png']) {
   const png = readFileSync(new URL(`../public/${file}`, import.meta.url));
   assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
   assert.ok(png.readUInt32BE(16) > 100 && png.readUInt32BE(20) > 100);

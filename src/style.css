@@ -61,15 +61,21 @@ h2 { font-size: 13px; letter-spacing: .01em; margin: 0; font-weight: 700; }
 .swatch--types { background: linear-gradient(135deg, #b88272 50%, #627fa2 50%); }
 .swatch--boundary { border: 2px dashed #254d3d; }
 .swatch--trees { background: #469a60; }
+.swatch--ndvi { background: linear-gradient(135deg, #d3bd90 45%, #337146 55%); }
+.ndvi-key { display: flex; align-items: center; gap: 7px; margin: 2px 0 9px 20px; color: #788779; font: 9px 'DM Mono', monospace; }
+.ndvi-key i { width: 80px; height: 7px; background: linear-gradient(90deg, #898174, #e3d191, #b1c777, #699e5d, #337146, #164e37); }
 .swatch--greenery { background: #4b7953; border-radius: 50%; box-shadow: 0 2px #826d4f; }
 .swatch--roads { background: #b06334; height: 3px; }
 .swatch--works { background: #be7945; border-radius: 50%; }
 .swatch--closures { background: #a33c43; border-radius: 50%; }
 .swatch--bike { background: #198e94; height: 3px; }
 .swatch--stops { background: #f5f5ee; border: 2px solid #214e74; border-radius: 50%; }
+.swatch--signals { background: #d6a84f; border: 2px solid #855d2a; border-radius: 50%; }
 .swatch--buses { background: #214e74; border-radius: 50%; }
 .swatch--rail { border-top: 3px solid #a0444d; height: 3px; }
 .swatch--parks { background: #4d9868; }
+.swatch--public { background: #89a983; border: 1px solid #416d56; }
+.swatch--parcels { border: 1px solid #765d8d; }
 .swatch--water { background: #348fbb; height: 3px; }
 .swatch--flood { background: #277fa6; opacity: .55; }
 .swatch--walking { border-top: 3px dashed #a46a3f; height: 3px; }
