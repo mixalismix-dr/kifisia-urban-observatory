@@ -30,6 +30,8 @@ h2 { font-size: 13px; letter-spacing: .01em; margin: 0; font-weight: 700; }
 .place:hover, .place.is-active { background: #e2eadc; }
 .place.is-active { box-shadow: inset 3px 0 #497358; }
 .layer { position: relative; display: flex; align-items: center; justify-content: space-between; padding: 9px 2px; font-size: 12px; cursor: pointer; }
+.basemap-choice { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 2px 10px; font-size: 12px; }
+.basemap-choice select { border: 1px solid #b9c9b9; border-radius: 0; background: #fbfaf3; color: #284d35; padding: 5px 7px; font: 11px 'DM Mono', monospace; }
 .layer > span:first-child { display: flex; align-items: center; gap: 9px; }
 .swatch { width: 11px; height: 11px; display: inline-block; }
 .swatch--built { background: #d0a681; }
@@ -90,6 +92,8 @@ h2 { font-size: 13px; letter-spacing: .01em; margin: 0; font-weight: 700; }
 .map-title span { font-size: 10px; letter-spacing: .13em; }
 .map-title strong { font: 600 clamp(31px, 4vw, 61px)/1.1 'Playfair Display', Georgia, serif; letter-spacing: -.06em; }
 .map-status { position: absolute; left: 30px; bottom: 29px; background: #fbfaf3e8; border-left: 3px solid #457b56; padding: 9px 12px; font-size: 10px; color: #31503b; box-shadow: 0 2px 10px #1a302119; }
+.imagery-credit { position: absolute; left: 30px; bottom: 68px; max-width: 350px; padding: 5px 7px; background: #fbfaf3e8; color: #31503b; font: 9px 'DM Mono', monospace; }
+.imagery-credit[hidden] { display: none; }
 .reset-view { position: absolute; top: 27px; right: 83px; border: 1px solid #c8d2c5; background: #fbfaf3f0; color: #284d35; padding: 10px 12px; font-size: 10px; box-shadow: 0 2px 9px #1a302119; }
 .reset-view:hover { background: white; }
 .reset-view span { margin-left: 5px; }
@@ -123,6 +127,7 @@ h2 { font-size: 13px; letter-spacing: .01em; margin: 0; font-weight: 700; }
   .map-title span { font-size: 8px; }
   .reset-view { top: 72px; right: 12px; }
   .map-status { bottom: 33px; left: 12px; font-size: 9px; max-width: 60%; }
+  .imagery-credit { left: 12px; bottom: 72px; max-width: 60%; }
   .map-legend { display: none; }
   .maplibregl-ctrl-top-right { top: 8px; right: 8px; }
 }

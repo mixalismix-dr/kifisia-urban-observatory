@@ -34,6 +34,13 @@ map.on('load', async () => {
   map.setPaintProperty('park', 'fill-color', '#b6cbb0');
   map.setPaintProperty('landcover_wood', 'fill-color', '#a9c2a8');
   const labelLayer = map.getStyle().layers.find((layer) => layer.type === 'symbol')?.id;
+  map.addSource('satellite', {
+    type: 'raster',
+    tiles: ['https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+    tileSize: 256,
+    attribution: 'Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+  });
+  map.addLayer({ id: 'satellite', type: 'raster', source: 'satellite', layout: { visibility: 'none' } }, labelLayer);
   map.addLayer({
     id: 'kifisia-buildings',
     type: 'fill-extrusion',
@@ -239,6 +246,11 @@ document.querySelector('#buildings-toggle').addEventListener('change', (event) =
   if (map.getLayer('kifisia-buildings')) {
     map.setLayoutProperty('kifisia-buildings', 'visibility', event.target.checked ? 'visible' : 'none');
   }
+});
+document.querySelector('#basemap-select').addEventListener('change', (event) => {
+  const satellite = event.target.value === 'satellite';
+  map.setLayoutProperty('satellite', 'visibility', satellite ? 'visible' : 'none');
+  document.querySelector('#imagery-credit').hidden = !satellite;
 });
 
 document.querySelector('#boundary-toggle').addEventListener('change', (event) => {

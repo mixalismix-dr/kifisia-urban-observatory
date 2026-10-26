@@ -34,6 +34,7 @@
 
           <section class="section" aria-labelledby="layers-heading">
             <div class="section__head"><span>02</span><h2 id="layers-heading">Map layers</h2></div>
+            <label class="basemap-choice" for="basemap-select">Base map <select id="basemap-select"><option value="street">Street map</option><option value="satellite">Satellite imagery</option></select></label>
             <label class="layer"><span><i class="swatch swatch--built"></i>3D buildings</span><input id="buildings-toggle" type="checkbox" checked /><span class="switch" aria-hidden="true"></span></label>
             <label class="layer"><span><i class="swatch swatch--boundary"></i>Municipal boundary</span><input id="boundary-toggle" type="checkbox" checked /><span class="switch" aria-hidden="true"></span></label>
             <label class="layer"><span><i class="swatch swatch--trees"></i>Tree cover density</span><input id="trees-toggle" type="checkbox" checked /><span class="switch" aria-hidden="true"></span></label>
@@ -111,6 +112,7 @@
         </dialog>
         <div class="map-title" aria-hidden="true"><span>38° 04′ N · 23° 48′ E</span><strong>ΚΗΦΙΣΙΑ</strong></div>
         <div class="map-status" id="map-status" role="status">Loading map…</div>
+        <div id="imagery-credit" class="imagery-credit" hidden>Imagery: Esri, Maxar, Earthstar Geographics, GIS User Community</div>
         <button class="reset-view" id="reset-view" type="button" aria-label="Show the whole municipality">↗ <span>Whole municipality</span></button>
         <div class="map-legend" aria-label="Map legend"><span><i class="legend-key legend-key--green"></i>Green space · base map</span><span><i class="legend-key legend-key--line"></i>Municipal boundary</span></div>
       </main>
