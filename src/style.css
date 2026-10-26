@@ -41,6 +41,7 @@ h2 { font-size: 13px; letter-spacing: .01em; margin: 0; font-weight: 700; }
 .swatch--buses { background: #214e74; border-radius: 50%; }
 .swatch--parks { background: #4d9868; }
 .swatch--water { background: #348fbb; height: 3px; }
+.swatch--flood { background: #277fa6; opacity: .55; }
 .swatch--walking { border-top: 3px dashed #a46a3f; height: 3px; }
 .swatch--landuse { background: linear-gradient(135deg, #6e9e70 50%, #e5d0b4 50%); }
 .swatch--dsm { background: linear-gradient(135deg, #e2ddb8, #387263); }
@@ -59,6 +60,7 @@ h2 { font-size: 13px; letter-spacing: .01em; margin: 0; font-weight: 700; }
 .source-links { border-top: 1px solid #e0e3d8; }
 .source-links a { display: flex; justify-content: space-between; gap: 8px; padding: 10px 3px; border-bottom: 1px solid #e0e3d8; text-decoration: none; font-size: 12px; color: #294b35; }
 .source-links a:hover { background: #e2eadc; }
+.source-links a span { flex: none; font: 9px 'DM Mono', monospace; }
 .source-links + .layer-note { margin: 9px 0 0; }
 .layer input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .switch { width: 28px; height: 16px; background: #a7b0a3; border-radius: 20px; position: relative; transition: background .15s; }
@@ -75,6 +77,14 @@ h2 { font-size: 13px; letter-spacing: .01em; margin: 0; font-weight: 700; }
 .sidebar__footer a { text-decoration: none; width: fit-content; border-bottom: 1px solid #9baa9c; }
 .sidebar__footer a:hover { color: #143d2a; }
 .map-stage { position: relative; overflow: hidden; background: #e9e8df; }
+.source-dialog { width: min(1120px, 94vw); height: min(760px, 88dvh); max-width: none; max-height: none; padding: 0; border: 1px solid #9aae9b; background: #f5f3e9; box-shadow: 0 20px 70px #14271e66; }
+.source-dialog::backdrop { background: #182b24ab; }
+.source-dialog[open] { display: flex; flex-direction: column; }
+.source-dialog__head { display: flex; align-items: center; gap: 15px; min-height: 48px; padding: 8px 12px 8px 18px; background: #20362c; color: #f7f4e9; }
+.source-dialog__head strong { margin-right: auto; font-size: 13px; }
+.source-dialog__head a { font: 10px 'DM Mono', monospace; white-space: nowrap; }
+.source-dialog__head button { border: 1px solid #9bb39b; color: #f7f4e9; background: transparent; width: 30px; height: 30px; font-size: 21px; line-height: 1; }
+.source-dialog iframe { display: block; border: 0; width: 100%; flex: 1; background: white; }
 #map { position: absolute; inset: 0; }
 .map-title { position: absolute; top: 25px; left: 30px; display: flex; flex-direction: column; align-items: flex-start; pointer-events: none; color: #20392b; text-shadow: 0 1px 8px #ffffffad; }
 .map-title span { font-size: 10px; letter-spacing: .13em; }

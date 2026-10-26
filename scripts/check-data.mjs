@@ -5,6 +5,7 @@ for (const [file, geometry] of [
   ['kifisia-bus-stops.geojson', 'Point'],
   ['kifisia-cycleways-centre.geojson', 'LineString'],
   ['kifisia-rivers.geojson', ['LineString', 'MultiLineString']],
+  ['kifisia-flood-100.geojson', ['Polygon', 'MultiPolygon']],
   ['kifisia-contours.geojson', 'LineString'],
   ['kifisia-parks.geojson', 'Polygon'],
   ['kifisia-playgrounds.geojson', 'Polygon'],

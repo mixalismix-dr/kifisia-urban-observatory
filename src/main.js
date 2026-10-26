@@ -81,6 +81,13 @@ map.on('load', async () => {
   });
   map.addLayer({ id: 'tree-cover', type: 'raster', source: 'tree-cover', layout: { visibility: layerVisibility('trees-toggle') }, paint: { 'raster-opacity': 0.72 } }, 'kifisia-buildings');
 
+  map.addSource('flood-100', { type: 'geojson', data: localData('flood-100'), attribution: 'Attica Water Directorate · flood-risk plan, first revision' });
+  map.addLayer({
+    id: 'flood-100', type: 'fill', source: 'flood-100',
+    layout: { visibility: layerVisibility('flood-toggle') },
+    paint: { 'fill-color': '#277fa6', 'fill-opacity': 0.38, 'fill-outline-color': '#18688e' },
+  }, 'kifisia-buildings');
+
   for (const [name, toggle, type, paint] of [
     ['parks', 'parks-toggle', 'fill', { 'fill-color': '#4d9868', 'fill-opacity': 0.46, 'fill-outline-color': '#25704d' }],
     ['playgrounds', 'playgrounds-toggle', 'fill', { 'fill-color': '#dca953', 'fill-opacity': 0.75, 'fill-outline-color': '#a66a21' }],
@@ -188,7 +195,7 @@ function showSelection(title, detail, note) {
 }
 
 map.on('click', (event) => {
-  const layers = ['landmarks', 'civic-pois', 'arch-sites', 'playgrounds', 'parks', 'rivers', 'contours', 'land-cover', 'live-buses', 'bus-stops', 'cycleways-centre', 'kifisia-buildings'].filter((id) => map.getLayer(id));
+  const layers = ['landmarks', 'civic-pois', 'arch-sites', 'playgrounds', 'parks', 'rivers', 'flood-100', 'contours', 'land-cover', 'live-buses', 'bus-stops', 'cycleways-centre', 'kifisia-buildings'].filter((id) => map.getLayer(id));
   const feature = map.queryRenderedFeatures(event.point, { layers })[0];
   if (!feature) return;
   if (['landmarks', 'civic-pois'].includes(feature.layer.id)) {
@@ -199,6 +206,8 @@ map.on('click', (event) => {
     showSelection(feature.properties.name || (feature.layer.id === 'parks' ? 'Mapped park' : 'Mapped playground'), feature.layer.id === 'parks' ? 'Park or public green space' : 'Playground', 'Athens GIS open data · mapped extent may be incomplete');
   } else if (feature.layer.id === 'rivers') {
     showSelection('Mapped watercourse', feature.properties.name_en || 'Kifisos tributary', 'Athens GIS stream network · line does not describe flood risk');
+  } else if (feature.layer.id === 'flood-100') {
+    showSelection('Modeled 100-year flood zone', 'Official Attica flood-risk plan · first revision', 'Scenario extent, not a current flood or a prediction for this location');
   } else if (feature.layer.id === 'contours') {
     showSelection(`${feature.properties.elevation_m} m surface contour`, '20 m interval · derived from Copernicus 30 m DSM', 'Surface elevation includes canopy and buildings');
   } else if (feature.layer.id === 'land-cover') {
@@ -242,6 +251,7 @@ for (const [input, layers] of [
   ['trees-toggle', ['tree-cover']], ['roads-toggle', ['main-roads']],
   ['bike-toggle', ['cycleways', 'cycleways-centre']], ['stops-toggle', ['bus-stops']],
   ['landuse-toggle', ['land-cover']], ['dsm-toggle', ['dsm']], ['contours-toggle', ['contours']],
+  ['flood-toggle', ['flood-100']],
   ['parks-toggle', ['parks']], ['playgrounds-toggle', ['playgrounds']], ['heritage-toggle', ['arch-sites']],
   ['water-toggle', ['rivers']], ['civic-toggle', ['civic-pois']], ['landmarks-toggle', ['landmarks']],
   ['walking-toggle', ['walking-paths']],
@@ -283,3 +293,18 @@ busToggle.addEventListener('change', () => {
   else busFeedStatus.textContent = 'Community OASA feed · switch on to load positions';
 });
 setInterval(refreshBuses, 60000);
+
+const sourceDialog = document.querySelector('#source-dialog');
+const sourceFrame = document.querySelector('#source-frame');
+document.querySelectorAll('[data-preview]').forEach((link) => {
+  link.addEventListener('click', (event) => {
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) return;
+    event.preventDefault();
+    document.querySelector('#source-title').textContent = link.firstChild.textContent.trim();
+    document.querySelector('#source-original').href = link.href;
+    sourceDialog.showModal();
+    sourceFrame.src = link.dataset.preview;
+  });
+});
+document.querySelector('#source-close').addEventListener('click', () => sourceDialog.close());
+sourceDialog.addEventListener('close', () => { sourceFrame.src = 'about:blank'; });
