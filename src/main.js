@@ -118,7 +118,7 @@ map.on('load', async () => {
     tileSize: 256,
     attribution: 'Esri, Maxar, Earthstar Geographics, and the GIS User Community',
   });
-  map.addLayer({ id: 'satellite', type: 'raster', source: 'satellite', layout: { visibility: 'none' } }, labelLayer);
+  map.addLayer({ id: 'satellite', type: 'raster', source: 'satellite', layout: { visibility: document.querySelector('#basemap-select').value === 'satellite' ? 'visible' : 'none' } }, labelLayer);
   map.addLayer({
     id: 'kifisia-buildings',
     type: 'fill-extrusion',
@@ -774,7 +774,7 @@ document.querySelector('#greenery-toggle').addEventListener('change', (event) =>
 });
 document.querySelector('#basemap-select').addEventListener('change', (event) => {
   const satellite = event.target.value === 'satellite';
-  map.setLayoutProperty('satellite', 'visibility', satellite ? 'visible' : 'none');
+  if (map.getLayer('satellite')) map.setLayoutProperty('satellite', 'visibility', satellite ? 'visible' : 'none');
   document.querySelector('#imagery-credit').hidden = !satellite;
 });
 
