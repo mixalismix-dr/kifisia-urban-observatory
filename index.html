@@ -19,7 +19,7 @@
         </header>
 
         <div class="sidebar__body">
-          <div class="edition">OPEN DATA ATLAS <span>25 OCT 2026</span></div>
+          <div class="edition">OPEN DATA ATLAS <span>26 OCT 2026</span></div>
           <p class="intro">Read the shape of the city.</p>
           <p class="description">Explore buildings, landscape, water, places and transport across Kifisia. Each layer names its source and date.</p>
 
@@ -36,6 +36,9 @@
             <div class="section__head"><span>02</span><h2 id="layers-heading">Map layers</h2></div>
             <label class="basemap-choice" for="basemap-select">Base map <select id="basemap-select"><option value="street">Street map</option><option value="satellite">Satellite imagery</option></select></label>
             <label class="layer"><span><i class="swatch swatch--built"></i>3D buildings</span><input id="buildings-toggle" type="checkbox" checked /><span class="switch" aria-hidden="true"></span></label>
+            <label class="layer"><span><i class="swatch swatch--types"></i>Tagged building types <small>933</small></span><input id="types-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+            <p class="layer-note">OSM · 26 Oct 2026 · colors cover tagged types only. Other buildings stay tan. Tags describe type, not verified use.</p>
+            <div class="type-key" aria-label="Building type colors"><span><i style="background:#b88272"></i>Residential</span><span><i style="background:#627fa2"></i>Civic &amp; health</span><span><i style="background:#c49b4a"></i>Business</span><span><i style="background:#9a77a8"></i>Worship</span><span><i style="background:#848f91"></i>Industrial</span><span><i style="background:#8ca6a0"></i>Ancillary</span></div>
             <label class="layer"><span><i class="swatch swatch--boundary"></i>Municipal boundary</span><input id="boundary-toggle" type="checkbox" checked /><span class="switch" aria-hidden="true"></span></label>
             <label class="layer"><span><i class="swatch swatch--trees"></i>Tree cover density</span><input id="trees-toggle" type="checkbox" checked /><span class="switch" aria-hidden="true"></span></label>
             <p class="layer-note">Copernicus · 2024 reference year · 10 m source pixels · crown cover 1–100%</p>
@@ -66,6 +69,8 @@
               <label class="layer"><span><i class="swatch swatch--landmarks"></i>Local landmarks <small>3</small></span><input id="landmarks-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <label class="layer"><span><i class="swatch swatch--heritage"></i>Historic sites <small>5</small></span><input id="heritage-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <label class="layer"><span><i class="swatch swatch--playgrounds"></i>Playgrounds <small>21</small></span><input id="playgrounds-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+              <label class="layer"><span><i class="swatch swatch--sports"></i>Sports sites <small>167</small></span><input id="sports-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+              <p class="layer-note">OSM · 26 Oct 2026 · mapped pitches, stadiums, tracks and sports centers. Private pools excluded.</p>
               <label class="layer"><span><i class="swatch swatch--civic"></i>Schools &amp; services <small>80</small></span><input id="civic-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <p class="layer-note">Athens GIS / OSM snapshot · 25 Oct 2026. Select a feature for details.</p>
             </details>
@@ -76,6 +81,7 @@
             <div class="source-links">
               <a href="https://kifissia.gr/erga_map/" data-preview="https://kifissia.gr/erga_map/" target="_blank" rel="noopener noreferrer">Municipal works map <span>VIEW</span></a>
               <a href="https://kifissia.gr/paidikes-chares-choroi-athlisis/" data-preview="https://kifissia.gr/paidikes-chares-choroi-athlisis/" target="_blank" rel="noopener noreferrer">Municipal playgrounds &amp; sports map <span>VIEW</span></a>
+              <a href="https://kifissia.gr/ypodomes-ston-athlitismo/" target="_blank" rel="noopener noreferrer">Municipal sports facilities list <span>↗</span></a>
               <a href="https://kifissia.gr/axiotheata/" data-preview="https://kifissia.gr/axiotheata/" target="_blank" rel="noopener noreferrer">Municipal attractions <span>VIEW</span></a>
               <a href="https://kifissia.gr/politiki-prostasia/" data-preview="https://kifissia.gr/wp-content/uploads/2026/05/DK_map_simeia.pdf" target="_blank" rel="noopener noreferrer">Civil protection sector map <span>VIEW</span></a>
               <a href="https://apdattikis.maps.arcgis.com/apps/webappviewer/index.html?id=2e32efbe241a4830a8b1ce41616cc368" target="_blank" rel="noopener noreferrer">Official Attica flood &amp; water map <span>↗</span></a>

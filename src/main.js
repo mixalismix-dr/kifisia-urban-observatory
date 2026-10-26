@@ -58,6 +58,17 @@ map.on('load', async () => {
   }, labelLayer);
 
   const localData = (name) => `${import.meta.env.BASE_URL}data/kifisia-${name}.geojson`;
+  map.addSource('building-types', { type: 'geojson', data: localData('building-types'), attribution: '© OpenStreetMap contributors · Geofabrik extract, 26 Oct 2026' });
+  map.addLayer({
+    id: 'building-types', type: 'fill-extrusion', source: 'building-types', minzoom: 13,
+    layout: { visibility: layerVisibility('types-toggle') },
+    paint: {
+      'fill-extrusion-color': ['match', ['get', 'category'],
+        'Residential', '#b88272', 'Civic & health', '#627fa2', 'Business', '#c49b4a',
+        'Worship', '#9a77a8', 'Industrial', '#848f91', 'Ancillary', '#8ca6a0', '#d0a681'],
+      'fill-extrusion-height': ['get', 'height_m'], 'fill-extrusion-opacity': 0.92,
+    },
+  }, labelLayer);
   map.addSource('land-cover', { type: 'geojson', data: localData('land-cover-2021'), attribution: 'Athens GIS · 2021 land cover' });
   map.addLayer({
     id: 'land-cover', type: 'fill', source: 'land-cover', layout: { visibility: layerVisibility('landuse-toggle') },
@@ -96,12 +107,13 @@ map.on('load', async () => {
   }, 'kifisia-buildings');
 
   for (const [name, toggle, type, paint] of [
+    ['sports', 'sports-toggle', 'fill', { 'fill-color': '#b86a53', 'fill-opacity': 0.72, 'fill-outline-color': '#713e38' }],
     ['parks', 'parks-toggle', 'fill', { 'fill-color': '#4d9868', 'fill-opacity': 0.46, 'fill-outline-color': '#25704d' }],
     ['playgrounds', 'playgrounds-toggle', 'fill', { 'fill-color': '#dca953', 'fill-opacity': 0.75, 'fill-outline-color': '#a66a21' }],
     ['arch-sites', 'heritage-toggle', 'fill', { 'fill-color': '#9b6b91', 'fill-opacity': 0.73, 'fill-outline-color': '#6f4267' }],
     ['rivers', 'water-toggle', 'line', { 'line-color': '#348fbb', 'line-width': 3, 'line-opacity': 0.9 }],
   ]) {
-    map.addSource(name, { type: 'geojson', data: localData(name), attribution: 'Athens GIS open data' });
+    map.addSource(name, { type: 'geojson', data: localData(name), attribution: name === 'sports' ? '© OpenStreetMap contributors · Geofabrik extract, 26 Oct 2026' : 'Athens GIS open data' });
     map.addLayer({ id: name, type, source: name, layout: { visibility: layerVisibility(toggle) }, paint }, labelLayer);
   }
   for (const [name, toggle, color, radius] of [
@@ -149,10 +161,24 @@ map.on('load', async () => {
   map.addSource('live-buses', { type: 'geojson', data: { type: 'FeatureCollection', features: [] }, attribution: 'OASA telematics via community feed' });
   map.addLayer({
     id: 'live-buses', type: 'circle', source: 'live-buses', layout: { visibility: layerVisibility('buses-toggle') },
-    paint: { 'circle-radius': 8, 'circle-color': '#214e74', 'circle-stroke-color': '#fff', 'circle-stroke-width': 2 },
+    paint: { 'circle-radius': 10, 'circle-color': '#fff', 'circle-stroke-color': '#214e74', 'circle-stroke-width': 2 },
   });
+  try {
+    const busImage = await map.loadImage(`${import.meta.env.BASE_URL}bus-3d.png`);
+    map.addImage('bus-3d', busImage.data);
+    map.setPaintProperty('live-buses', 'circle-opacity', 0);
+    map.setPaintProperty('live-buses', 'circle-stroke-opacity', 0);
+    map.addLayer({
+      id: 'live-bus-icon', type: 'symbol', source: 'live-buses',
+      layout: { visibility: layerVisibility('buses-toggle'), 'icon-image': 'bus-3d',
+        'icon-size': ['interpolate', ['linear'], ['zoom'], 11, 0.09, 16, 0.25],
+        'icon-anchor': 'bottom', 'icon-allow-overlap': true },
+    });
+  } catch (error) {
+    console.warn('Bus icon unavailable; showing position dots.', error);
+  }
   map.addLayer({
-    id: 'live-bus-labels', type: 'symbol', source: 'live-buses', layout: { visibility: layerVisibility('buses-toggle'), 'text-field': ['get', 'line'], 'text-size': 11, 'text-offset': [0, -1.5] },
+    id: 'live-bus-labels', type: 'symbol', source: 'live-buses', layout: { visibility: layerVisibility('buses-toggle'), 'text-field': ['get', 'line'], 'text-size': 11, 'text-offset': [0, -3] },
     paint: { 'text-color': '#173a56', 'text-halo-color': '#fff', 'text-halo-width': 1.5 },
   });
   if (document.querySelector('#buses-toggle').checked) refreshBuses();
@@ -202,7 +228,7 @@ function showSelection(title, detail, note) {
 }
 
 map.on('click', (event) => {
-  const layers = ['landmarks', 'civic-pois', 'arch-sites', 'playgrounds', 'parks', 'rivers', 'flood-100', 'contours', 'land-cover', 'live-buses', 'bus-stops', 'cycleways-centre', 'kifisia-buildings'].filter((id) => map.getLayer(id));
+  const layers = ['live-bus-icon', 'live-buses', 'landmarks', 'civic-pois', 'sports', 'building-types', 'arch-sites', 'playgrounds', 'parks', 'rivers', 'flood-100', 'contours', 'land-cover', 'bus-stops', 'cycleways-centre', 'kifisia-buildings'].filter((id) => map.getLayer(id));
   const feature = map.queryRenderedFeatures(event.point, { layers })[0];
   if (!feature) return;
   if (['landmarks', 'civic-pois'].includes(feature.layer.id)) {
@@ -211,6 +237,10 @@ map.on('click', (event) => {
     showSelection(feature.properties.name || feature.properties.name_en || 'Mapped historic site', feature.properties.historic || 'Historic feature', 'Athens GIS archaeological-sites layer');
   } else if (['parks', 'playgrounds'].includes(feature.layer.id)) {
     showSelection(feature.properties.name || (feature.layer.id === 'parks' ? 'Mapped park' : 'Mapped playground'), feature.layer.id === 'parks' ? 'Park or public green space' : 'Playground', 'Athens GIS open data · mapped extent may be incomplete');
+  } else if (feature.layer.id === 'sports') {
+    showSelection(feature.properties.name || 'Mapped sports site', [feature.properties.facility, feature.properties.sport].filter(Boolean).join(' · '), 'OpenStreetMap snapshot · 26 Oct 2026. Facility access and availability may differ.');
+  } else if (feature.layer.id === 'building-types') {
+    showSelection(feature.properties.name || 'Tagged building', `${feature.properties.category} · OSM building=${feature.properties.building_type}`, 'OpenStreetMap snapshot · 26 Oct 2026. Tag describes building type, not verified current use; height is approximate.');
   } else if (feature.layer.id === 'rivers') {
     showSelection('Mapped watercourse', feature.properties.name_en || 'Kifisos tributary', 'Athens GIS stream network · line does not describe flood risk');
   } else if (feature.layer.id === 'flood-100') {
@@ -221,7 +251,7 @@ map.on('click', (event) => {
     showSelection(feature.properties.class_2021, '2021 land cover and land use', 'Athens GIS · mapped class, not parcel zoning');
   } else if (feature.layer.id === 'bus-stops') {
     showSelection(feature.properties.name || 'Bus stop', `Routes: ${feature.properties.route_ref || 'Not listed'}`, 'OASA stops via Athens GIS · published 21 Oct 2026');
-  } else if (feature.layer.id === 'live-buses') {
+  } else if (['live-bus-icon', 'live-buses'].includes(feature.layer.id)) {
     const time = new Date(Number(feature.properties.position_at) * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
     showSelection(`Bus ${feature.properties.line}`, `Last position: ${time}`, 'Community OASA telematics feed · position may be delayed');
   } else if (feature.layer.id === 'cycleways-centre') {
@@ -245,7 +275,11 @@ document.querySelectorAll('.place').forEach((button) => {
 document.querySelector('#buildings-toggle').addEventListener('change', (event) => {
   if (map.getLayer('kifisia-buildings')) {
     map.setLayoutProperty('kifisia-buildings', 'visibility', event.target.checked ? 'visible' : 'none');
+    map.setLayoutProperty('building-types', 'visibility', event.target.checked && document.querySelector('#types-toggle').checked ? 'visible' : 'none');
   }
+});
+document.querySelector('#types-toggle').addEventListener('change', (event) => {
+  if (map.getLayer('building-types')) map.setLayoutProperty('building-types', 'visibility', event.target.checked && document.querySelector('#buildings-toggle').checked ? 'visible' : 'none');
 });
 document.querySelector('#basemap-select').addEventListener('change', (event) => {
   const satellite = event.target.value === 'satellite';
@@ -263,7 +297,7 @@ for (const [input, layers] of [
   ['trees-toggle', ['tree-cover']], ['roads-toggle', ['main-roads']],
   ['bike-toggle', ['cycleways', 'cycleways-centre']], ['stops-toggle', ['bus-stops']],
   ['landuse-toggle', ['land-cover']], ['dsm-toggle', ['dsm']], ['contours-toggle', ['contours']],
-  ['flood-toggle', ['flood-100']],
+  ['flood-toggle', ['flood-100']], ['sports-toggle', ['sports']],
   ['parks-toggle', ['parks']], ['playgrounds-toggle', ['playgrounds']], ['heritage-toggle', ['arch-sites']],
   ['water-toggle', ['rivers']], ['civic-toggle', ['civic-pois']], ['landmarks-toggle', ['landmarks']],
   ['walking-toggle', ['walking-paths']],
@@ -300,7 +334,7 @@ async function refreshBuses() {
 }
 busToggle.addEventListener('change', () => {
   const visibility = busToggle.checked ? 'visible' : 'none';
-  for (const layer of ['live-buses', 'live-bus-labels']) if (map.getLayer(layer)) map.setLayoutProperty(layer, 'visibility', visibility);
+  for (const layer of ['live-buses', 'live-bus-icon', 'live-bus-labels']) if (map.getLayer(layer)) map.setLayoutProperty(layer, 'visibility', visibility);
   if (busToggle.checked) refreshBuses();
   else busFeedStatus.textContent = 'Community OASA feed · switch on to load positions';
 });
