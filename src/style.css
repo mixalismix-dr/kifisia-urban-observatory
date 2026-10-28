@@ -90,6 +90,7 @@ h2 { font-size: 13px; letter-spacing: .01em; margin: 0; font-weight: 700; }
 .swatch--heritage { background: #9b6b91; }
 .swatch--playgrounds { background: #dca953; }
 .swatch--sports { background: #b86a53; }
+.swatch--municipal-places { background: #dca953; border: 2px solid #b86a53; border-radius: 50%; }
 .swatch--civic { background: #4d5e81; border-radius: 50%; }
 .layer-group { border-top: 1px solid #d4d8cb; margin-top: 12px; padding-top: 9px; }
 .layer-group summary { cursor: pointer; color: #365744; font-size: 11px; font-weight: 700; letter-spacing: .03em; padding: 5px 2px 7px; }

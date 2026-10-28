@@ -264,6 +264,12 @@ map.on('load', async () => {
       paint: { 'line-color': '#be7945', 'line-width': 4 },
     });
   }
+  map.addSource('municipal-places', { type: 'geojson', data: emptyFeatures(), attribution: 'Municipality of Kifisia · published playgrounds and sports map' });
+  map.addLayer({ id: 'municipal-places', type: 'circle', source: 'municipal-places',
+    layout: { visibility: layerVisibility('municipal-places-toggle') },
+    paint: { 'circle-radius': 7, 'circle-color': ['match', ['get', 'category'], 'Playground', '#dca953', 'Sports facility', '#b86a53', '#4d9868'],
+      'circle-stroke-color': '#fffaf0', 'circle-stroke-width': 2 },
+  });
 
   map.addSource('metro-line1', { type: 'geojson', data: localData('metro-line1'), attribution: 'Athens GIS · CC BY 4.0' });
   map.addLayer({ id: 'metro-line1', type: 'line', source: 'metro-line1',
@@ -520,6 +526,30 @@ const municipalMaps = {
   works: '1M_gOxsDf7y683X9rL5yVtWjA2m77TKA',
   closures: '1f0j6totjS4ADJ_oxDgHQsXPUhYCPaRI',
 };
+async function loadMunicipalPlaces() {
+  const status = document.querySelector('#municipal-places-status');
+  status.textContent = 'Loading the municipality’s published facilities…';
+  try {
+    const response = await fetch('https://www.google.com/maps/d/kml?mid=12FXf5h2zso1dlE1_LVr4zNFh2_LoKLk&forcekml=1');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const xml = new DOMParser().parseFromString(await response.text(), 'application/xml');
+    if (xml.getElementsByTagName('parsererror').length) throw new Error('Invalid KML');
+    const features = [...xml.getElementsByTagName('Placemark')].flatMap((mark) => {
+      const raw = mark.getElementsByTagName('Point')[0]?.getElementsByTagName('coordinates')[0]?.textContent?.trim();
+      const coordinates = raw?.split(',').slice(0, 2).map(Number);
+      if (!coordinates || coordinates.length !== 2 || coordinates.some((value) => !Number.isFinite(value))) return [];
+      const name = mark.getElementsByTagName('name')[0]?.textContent?.trim() || 'Municipal facility';
+      const category = name.includes('Παιδική Χαρά') ? 'Playground' : name.startsWith('Πάρκο') ? 'Park' : 'Sports facility';
+      return [{ type: 'Feature', geometry: { type: 'Point', coordinates }, properties: { name, category } }];
+    });
+    if (!features.length) throw new Error('No facility points in published map');
+    map.getSource('municipal-places').setData({ type: 'FeatureCollection', features });
+    status.textContent = `${features.length} municipal facility points · source may change; verify access locally`;
+  } catch (error) {
+    map.getSource('municipal-places')?.setData(emptyFeatures());
+    status.textContent = `Municipal facilities unavailable: ${error.message}`;
+  }
+}
 function municipalFeatures(kml, name) {
   const xml = new DOMParser().parseFromString(kml, 'application/xml');
   if (xml.getElementsByTagName('parsererror').length) throw new Error('Invalid KML');
@@ -726,11 +756,14 @@ map.on('click', (event) => {
   buildingPopup?.remove();
   clearBusSelection();
   railPopup?.remove();
-  const layers = ['live-bus-hit', 'live-bus-labels', 'live-bus-icon', 'live-buses', 'municipal-closures-points', 'municipal-works-points', 'municipal-works-lines', 'train-model-hit', 'metro-stations', 'bus-network', 'landmarks', 'civic-pois', 'traffic-lights', 'parcels-fill', 'sports', 'canopy-forms-hit', 'building-types', 'copernicus-buildings', 'arch-sites', 'playgrounds', 'parks', 'public-spaces', 'rivers', 'flood-100', 'contours', 'land-cover', 'bus-stops', 'cycleways-centre', 'kifisia-buildings'].filter((id) => map.getLayer(id));
+  const layers = ['live-bus-hit', 'live-bus-labels', 'live-bus-icon', 'live-buses', 'municipal-places', 'municipal-closures-points', 'municipal-works-points', 'municipal-works-lines', 'train-model-hit', 'metro-stations', 'bus-network', 'landmarks', 'civic-pois', 'traffic-lights', 'parcels-fill', 'sports', 'canopy-forms-hit', 'building-types', 'copernicus-buildings', 'arch-sites', 'playgrounds', 'parks', 'public-spaces', 'rivers', 'flood-100', 'contours', 'land-cover', 'bus-stops', 'cycleways-centre', 'kifisia-buildings'].filter((id) => map.getLayer(id));
   const hits = map.queryRenderedFeatures(event.point, { layers });
   const feature = layers.map((id) => hits.find((hit) => hit.layer.id === id)).find(Boolean);
   if (!feature) return;
-  if (feature.layer.id.startsWith('municipal-')) {
+  if (feature.layer.id === 'municipal-places') {
+    showBuilding(event, feature.properties.name, feature.properties.category,
+      'Municipality of Kifisia · published facility point. Check the municipal source for current access and activities.');
+  } else if (feature.layer.id.startsWith('municipal-')) {
     const works = feature.layer.id.startsWith('municipal-works');
     showBuilding(event, feature.properties.name, works ? feature.properties.category : `${feature.properties.dateStatus} permit notice`,
       `${feature.properties.description || 'No description supplied'} · Municipality of Kifisia My Maps · check the source for changes`);
@@ -922,6 +955,10 @@ for (const name of ['works', 'closures']) {
     if (event.target.checked) loadMunicipal(name);
   });
 }
+document.querySelector('#municipal-places-toggle').addEventListener('change', (event) => {
+  if (map.getLayer('municipal-places')) map.setLayoutProperty('municipal-places', 'visibility', event.target.checked ? 'visible' : 'none');
+  if (event.target.checked) loadMunicipalPlaces();
+});
 setInterval(() => { if (document.querySelector('#closures-toggle').checked) loadMunicipal('closures'); }, 15 * 60 * 1000);
 
 const busToggle = document.querySelector('#buses-toggle');
