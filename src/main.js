@@ -1017,18 +1017,3 @@ busToggle.addEventListener('change', () => {
   else { clearBusSelection(); busFeedStatus.textContent = 'Community OASA feed · switch on to load positions'; }
 });
 setInterval(refreshBuses, 60000);
-
-const sourceDialog = document.querySelector('#source-dialog');
-const sourceFrame = document.querySelector('#source-frame');
-document.querySelectorAll('[data-preview]').forEach((link) => {
-  link.addEventListener('click', (event) => {
-    if (event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) return;
-    event.preventDefault();
-    document.querySelector('#source-title').textContent = link.firstChild.textContent.trim();
-    document.querySelector('#source-original').href = link.href;
-    sourceDialog.showModal();
-    sourceFrame.src = link.dataset.preview;
-  });
-});
-document.querySelector('#source-close').addEventListener('click', () => sourceDialog.close());
-sourceDialog.addEventListener('close', () => { sourceFrame.src = 'about:blank'; });
