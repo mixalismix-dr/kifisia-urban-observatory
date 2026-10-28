@@ -17,6 +17,7 @@ features.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [23.814
 writeFileSync('public/data/kifisia-civic-pois.geojson', JSON.stringify({ type: 'FeatureCollection', features }));
 
 const landmarks = [
+  ['Alsos Kifisias', 23.810459, 38.072806, 'Municipal park'],
   ['Goulandris Natural History Museum', 23.8146485, 38.0743683, 'Museum'],
   ['Villa Kazouli', 23.8102896, 38.0675885, 'Historic villa'],
   ['Agios Dimitrios of Kifisia', 23.8122606, 38.0700641, 'Church'],
