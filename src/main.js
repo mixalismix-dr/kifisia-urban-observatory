@@ -486,20 +486,57 @@ let trafficData;
 async function loadTraffic() {
   if (!trafficModelLayer) return;
   trafficModelLayer.visible = document.querySelector('#traffic-toggle').checked;
-  if (!trafficModelLayer.visible) { map.triggerRepaint(); return; }
+  if (!trafficModelLayer.visible) {
+    if (map.getLayer('kifisias-traffic')) map.setLayoutProperty('kifisias-traffic', 'visibility', 'none');
+    map.triggerRepaint();
+    return;
+  }
   if (!trafficData) {
     try {
       trafficData = await fetchJson(`${import.meta.env.BASE_URL}data/kifisia-traffic-roads.geojson`);
       trafficModelLayer.setRoads(trafficData);
+      map.addSource('kifisias-traffic', { type: 'geojson',
+        data: { type: 'FeatureCollection', features: trafficData.features.filter((feature) => feature.properties.name === 'Κηφισίας') },
+        attribution: 'OSM roads · Attica Traffic Police bulletin' });
+      map.addLayer({ id: 'kifisias-traffic', type: 'line', source: 'kifisias-traffic',
+        layout: { visibility: 'visible', 'line-cap': 'round' },
+        paint: { 'line-color': '#89918f', 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 2, 16, 5], 'line-opacity': 0.5 },
+      }, 'estimated-traffic');
     } catch (error) {
       document.querySelector('#traffic-status').textContent = `Illustrative traffic unavailable: ${error.message}`;
       return;
     }
   }
+  let status = 'Police bulletin unavailable; cars use road-class estimates.';
+  try {
+    const response = await fetch(`${import.meta.env.BASE_URL}data/kifisia-traffic-bulletin.json`, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const bulletin = await response.json();
+    trafficModelLayer.setBulletin(bulletin);
+    const updated = new Date(bulletin.updatedAt);
+    if (!trafficModelLayer.bulletinIsFresh()) {
+      status = `Police bulletin last updated ${updated.toLocaleString('en-GB', { timeZone: 'Europe/Athens' })} Athens time; too old to use.`;
+    } else {
+      const level = Math.max(bulletin.directions.northbound, bulletin.directions.southbound);
+      const names = [null, 'clear', 'increased', 'very high'];
+      map.setPaintProperty('kifisias-traffic', 'line-color', [null, '#2798bf', '#e9a23b', '#d5483a'][level]);
+      map.setPaintProperty('kifisias-traffic', 'line-opacity', 0.9);
+      map.setLayoutProperty('kifisias-traffic', 'visibility', 'visible');
+      status = `Kifisias Avenue: north ${names[bulletin.directions.northbound]}, south ${names[bulletin.directions.southbound]} · police bulletin ${updated.toLocaleString('en-GB', { timeZone: 'Europe/Athens' })} Athens time. Avenue color and car speed use the more congested direction.`;
+    }
+  } catch (error) {
+    trafficModelLayer.setBulletin(null);
+    status = `Police bulletin unavailable (${error.message}); cars use road-class estimates.`;
+  }
+  if (!trafficModelLayer.bulletinIsFresh()) {
+    map.setPaintProperty('kifisias-traffic', 'line-color', '#89918f');
+    map.setPaintProperty('kifisias-traffic', 'line-opacity', 0.5);
+  }
   trafficModelLayer.refresh();
-  document.querySelector('#traffic-status').textContent = 'Illustrative 3D cars on OSM roads · 26 Oct 2026. Road class and Athens time set density and speed. Enlarged for visibility; no tracked cars or congestion data. Zoom 15+.';
+  document.querySelector('#traffic-status').textContent = `${status} Gray avenue line means no recent bulletin. Other roads: estimated cars. No tracked car positions or traffic counts. Zoom 15+ for cars.`;
 }
 document.querySelector('#traffic-toggle').addEventListener('change', loadTraffic);
+setInterval(() => { if (document.querySelector('#traffic-toggle').checked) void loadTraffic(); }, 10 * 60 * 1000);
 
 function selectionDetails(title, detail, note) {
   const content = document.createElement('div');

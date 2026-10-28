@@ -30,7 +30,8 @@ function roadPath(feature, index) {
   const distances = [0];
   for (let i = 1; i < points.length; i++) distances.push(distances[i - 1] + Math.hypot(points[i][0] - points[i - 1][0], points[i][1] - points[i - 1][1]));
   const lon = feature.geometry.coordinates.map((p) => p[0]), lat = feature.geometry.coordinates.map((p) => p[1]);
-  return { points, distances, length: distances.at(-1), className: feature.properties.highway, index,
+  return { points, distances, length: distances.at(-1), className: feature.properties.highway,
+    isKifisias: feature.properties.name === 'Κηφισίας', index,
     bounds: [Math.min(...lon), Math.min(...lat), Math.max(...lon), Math.max(...lat)] };
 }
 
@@ -45,7 +46,7 @@ function position(road, distance) {
 
 export function createTrafficLayer(map) {
   return {
-    id: 'estimated-traffic', type: 'custom', renderingMode: '3d', visible: false, roads: [], cars: [],
+    id: 'estimated-traffic', type: 'custom', renderingMode: '3d', visible: false, roads: [], cars: [], bulletin: null,
     onAdd(_, gl) {
       this.scene = new THREE.Scene();
       this.camera = new THREE.Camera();
@@ -64,6 +65,14 @@ export function createTrafficLayer(map) {
       this.roads = data.features.map(roadPath).filter((road) => road.length >= 75);
       this.refresh();
     },
+    setBulletin(bulletin) {
+      this.bulletin = bulletin;
+      this.refresh();
+    },
+    bulletinIsFresh() {
+      const age = Date.now() - Date.parse(this.bulletin?.updatedAt);
+      return Number.isFinite(age) && age >= -300000 && age <= 6 * 3600000;
+    },
     refresh() {
       if (!this.scene || !this.visible || !this.roads.length || map.getZoom() < 15) return;
       const view = map.getBounds();
@@ -72,11 +81,21 @@ export function createTrafficLayer(map) {
       const limit = Math.round((map.getZoom() < 16 ? 110 : 85) * density);
       const candidates = this.roads.filter(({ bounds }) => bounds[0] <= view.getEast() && bounds[2] >= view.getWest() && bounds[1] <= view.getNorth() && bounds[3] >= view.getSouth());
       candidates.sort((a, b) => (Math.abs(Math.sin(a.index * 12.9898)) / (weights[a.className] || 1)) - (Math.abs(Math.sin(b.index * 12.9898)) / (weights[b.className] || 1)));
-      for (const car of this.cars) this.scene.remove(car.model);
+      for (const car of this.cars) {
+        this.scene.remove(car.model);
+        if (car.trafficLevel) car.model.children[0].material.dispose();
+      }
+      const fresh = this.bulletinIsFresh();
       this.cars = candidates.slice(0, limit).map((road, i) => {
         const model = this.templates[i % this.templates.length].clone(true);
+        const trafficLevel = fresh && road.isKifisias
+          ? Math.max(this.bulletin.directions.northbound, this.bulletin.directions.southbound) : null;
+        if (trafficLevel >= 1 && trafficLevel <= 3) {
+          model.children[0].material = model.children[0].material.clone();
+          model.children[0].material.color.set([null, '#2798bf', '#e9a23b', '#d5483a'][trafficLevel]);
+        }
         this.scene.add(model);
-        return { road, model, offset: Math.abs(Math.sin(road.index * 78.233)) * road.length };
+        return { road, model, trafficLevel, offset: Math.abs(Math.sin(road.index * 78.233)) * road.length };
       });
       map.triggerRepaint();
     },
@@ -84,8 +103,8 @@ export function createTrafficLayer(map) {
       if (!this.visible || map.getZoom() < 15 || !this.cars.length) return;
       const seconds = Date.now() / 1000;
       const size = Math.min(6, Math.max(1.5, 2.5 * 2 ** (17 - map.getZoom())));
-      for (const { road, model, offset } of this.cars) {
-        const speed = (speeds[road.className] || 20) / 3.6;
+      for (const { road, model, offset, trafficLevel } of this.cars) {
+        const speed = (speeds[road.className] || 20) / 3.6 * ([1, 1, 0.6, 0.3][trafficLevel] || 1);
         const point = position(road, (offset + seconds * speed) % road.length);
         model.position.set(point.x, point.y, 0);
         model.rotation.z = point.bearing;

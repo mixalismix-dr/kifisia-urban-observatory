@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: '17 4-16 * * 1-5'
 
 permissions:
   contents: read
@@ -27,6 +29,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: node scripts/fetch-traffic-bulletin.mjs
+        continue-on-error: true
       - run: npm run build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
