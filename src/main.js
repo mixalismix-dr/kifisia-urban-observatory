@@ -96,6 +96,15 @@ let railNetworkVisible = false;
 const kifissiaStation = [23.808219792, 38.073395087];
 const emptyFeatures = () => ({ type: 'FeatureCollection', features: [] });
 const layerVisibility = (toggle) => document.querySelector(`#${toggle}`).checked ? 'visible' : 'none';
+const layerPanel = document.querySelector('#layers-heading').closest('section');
+function updateLayerCounts() {
+  for (const group of layerPanel.querySelectorAll('.layer-group')) {
+    const active = group.querySelectorAll('.layer input[type="checkbox"]:checked').length;
+    group.querySelector('.layer-group__count').textContent = `${active} active`;
+  }
+}
+layerPanel.addEventListener('change', updateLayerCounts);
+updateLayerCounts();
 const map = new maplibregl.Map({
   container: 'map',
   style: 'https://tiles.openfreemap.org/styles/positron',

@@ -92,8 +92,15 @@ h2 { font-size: 13px; letter-spacing: .01em; margin: 0; font-weight: 700; }
 .swatch--sports { background: #b86a53; }
 .swatch--municipal-places { background: #dca953; border: 2px solid #b86a53; border-radius: 50%; }
 .swatch--civic { background: #4d5e81; border-radius: 50%; }
-.layer-group { border-top: 1px solid #d4d8cb; margin-top: 12px; padding-top: 9px; }
-.layer-group summary { cursor: pointer; color: #365744; font-size: 11px; font-weight: 700; letter-spacing: .03em; padding: 5px 2px 7px; }
+.layer-group { border-top: 1px solid #d4d8cb; }
+.layer-group:last-child { border-bottom: 1px solid #d4d8cb; }
+.layer-group summary { display: flex; align-items: center; gap: 9px; list-style: none; cursor: pointer; color: #365744; font-size: 12px; font-weight: 700; padding: 12px 3px; }
+.layer-group summary::-webkit-details-marker { display: none; }
+.layer-group summary::before { content: '›'; color: #63816d; font-size: 18px; line-height: 0.7; transition: transform .15s; }
+.layer-group[open] summary::before { transform: rotate(90deg); }
+.layer-group summary:hover { background: #e8ede2; }
+.layer-group__count { margin-left: auto; color: #718675; font: 10px 'DM Mono', monospace; white-space: nowrap; }
+.layer-group[open] { padding-bottom: 10px; }
 .layer-group summary:focus-visible { outline: 2px solid #183e2b; outline-offset: 2px; }
 .layer small { font: 10px 'DM Mono', monospace; color: #78907e; }
 .layer-note { margin: 0 0 7px 20px; color: #788779; font: 10px/1.5 'DM Mono', monospace; }
