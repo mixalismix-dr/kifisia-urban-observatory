@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict';
 import { athensTime, shadowGeometry } from '../src/sun-preview.js';
+import { railPath, estimatedTrains } from '../src/rail-estimates.js';
 import { readFileSync } from 'node:fs';
 
 for (const [file, geometry] of [
   ['kifisia-bus-stops.geojson', 'Point'],
+  ['kifisia-bus-network.geojson', 'LineString'],
+  ['kifisia-traffic-roads.geojson', 'LineString'],
   ['kifisia-metro-line1.geojson', 'MultiLineString'],
   ['kifisia-metro-stations.geojson', 'Point'],
   ['kifisia-cycleways-centre.geojson', 'LineString'],
@@ -38,6 +41,16 @@ assert.ok(canopy.features.every(({ geometry, properties }) =>
   properties.crown_radius_m >= 2 && properties.crown_radius_m <= 8));
 
 const rail = JSON.parse(readFileSync(new URL('../public/data/kifisia-metro-line1.geojson', import.meta.url), 'utf8'));
+const stations = JSON.parse(readFileSync(new URL('../public/data/kifisia-metro-stations.geojson', import.meta.url), 'utf8'));
+const path = railPath(rail, stations);
+assert.deepEqual(path.calls.slice(0, 3).map((call) => call.name), ['KIFISSIA', 'KAT', 'MAROUSSI']);
+const trains = estimatedTrains(path, new Date('2026-10-28T05:30:00Z'));
+assert.ok(trains.length > 0 && trains.every((train) => train.coordinate.every(Number.isFinite) &&
+  ['Piraeus', 'Kifissia'].includes(train.direction) && train.nextStation));
+const roads = JSON.parse(readFileSync(new URL('../public/data/kifisia-traffic-roads.geojson', import.meta.url), 'utf8'));
+assert.ok(roads.features.length > 2000 && roads.features.every((feature) => feature.properties.highway));
+const busNetwork = JSON.parse(readFileSync(new URL('../public/data/kifisia-bus-network.geojson', import.meta.url), 'utf8'));
+assert.ok(new Set(busNetwork.features.map((feature) => feature.properties.line)).size >= 20);
 const [terminal, nextRailPoint] = rail.features[0].geometry.coordinates[0];
 assert.ok(Math.abs(terminal[0] - 23.808219792) < 0.001 && Math.abs(terminal[1] - 38.073395087) < 0.001,
   'Line 1 must start at Kifissia for the train model');

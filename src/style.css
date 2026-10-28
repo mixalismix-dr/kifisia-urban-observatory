@@ -66,6 +66,7 @@ h2 { font-size: 13px; letter-spacing: .01em; margin: 0; font-weight: 700; }
 .ndvi-key i { width: 80px; height: 7px; background: linear-gradient(90deg, #898174, #e3d191, #b1c777, #699e5d, #337146, #164e37); }
 .swatch--greenery { background: #4b7953; border-radius: 50%; box-shadow: 0 2px #826d4f; }
 .swatch--roads { background: #b06334; height: 3px; }
+.swatch--traffic { background: #c6584e; border: 2px solid #24353a; border-radius: 3px; }
 .swatch--works { background: #be7945; border-radius: 50%; }
 .swatch--closures { background: #a33c43; border-radius: 50%; }
 .swatch--bike { background: #198e94; height: 3px; }
@@ -73,6 +74,9 @@ h2 { font-size: 13px; letter-spacing: .01em; margin: 0; font-weight: 700; }
 .swatch--signals { background: #d6a84f; border: 2px solid #855d2a; border-radius: 50%; }
 .swatch--buses { background: #214e74; border-radius: 50%; }
 .swatch--rail { border-top: 3px solid #a0444d; height: 3px; }
+.network-button { margin: 1px 0 8px 20px; padding: 6px 9px; border: 1px solid #9eb7a5; background: #e7eee4; color: #294b35; font: 10px 'DM Mono', monospace; text-align: left; }
+.network-button:hover, .network-button:focus-visible { background: #d6e5d3; outline-color: #36664c; }
+.network-button[aria-pressed="true"] { background: #d2e2d0; border-color: #497358; }
 .swatch--parks { background: #4d9868; }
 .swatch--public { background: #89a983; border: 1px solid #416d56; }
 .swatch--parcels { border: 1px solid #765d8d; }

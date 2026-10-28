@@ -47,11 +47,11 @@ function trainModel() {
   return train;
 }
 
-export function createTrainLayer(map, coordinate, bearing) {
-  const origin = maplibregl.MercatorCoordinate.fromLngLat(coordinate);
+export function createTrainLayer(map) {
+  const origin = maplibregl.MercatorCoordinate.fromLngLat([23.808, 38.067]);
   const metres = origin.meterInMercatorCoordinateUnits();
   return {
-    id: 'train-model', type: 'custom', renderingMode: '3d', visible: true,
+    id: 'train-model', type: 'custom', renderingMode: '3d', visible: true, trains: [],
     onAdd(_, gl) {
       this.scene = new THREE.Scene();
       this.camera = new THREE.Camera();
@@ -61,14 +61,27 @@ export function createTrainLayer(map, coordinate, bearing) {
       const sun = new THREE.DirectionalLight(0xffffff, 1.8);
       sun.position.set(-200, -300, 500);
       this.scene.add(sun);
-      this.model = trainModel();
-      this.model.rotation.z = bearing * Math.PI / 180;
-      this.scene.add(this.model);
+      this.template = trainModel();
+      this.models = new Map();
+    },
+    setTrains(trains) {
+      this.trains = trains;
+      if (!this.scene) return;
+      const active = new Set(trains.map((train) => train.id));
+      for (const [id, model] of this.models) if (!active.has(id)) { this.scene.remove(model); this.models.delete(id); }
+      for (const { id, coordinate, bearing } of trains) {
+        const point = maplibregl.MercatorCoordinate.fromLngLat(coordinate);
+        let model = this.models.get(id);
+        if (!model) { model = this.template.clone(true); this.scene.add(model); this.models.set(id, model); }
+        model.position.set((point.x - origin.x) / metres, (point.y - origin.y) / metres, 0);
+        model.rotation.z = bearing * Math.PI / 180;
+      }
+      map.triggerRepaint();
     },
     render(gl, args) {
-      if (!this.visible || map.getZoom() < 13) return;
+      if (!this.visible || map.getZoom() < 13 || !this.models.length) return;
       const size = Math.min(5, Math.max(1, 1.2 * 2 ** (17 - map.getZoom())));
-      this.model.scale.setScalar(size);
+      for (const model of this.models.values()) model.scale.setScalar(size);
       const projection = new THREE.Matrix4().fromArray(args.defaultProjectionData.mainMatrix);
       const local = new THREE.Matrix4().makeTranslation(origin.x, origin.y, 0)
         .scale(new THREE.Vector3(metres, metres, metres));

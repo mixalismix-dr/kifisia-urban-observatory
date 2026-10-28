@@ -2,6 +2,8 @@ import * as maplibregl from 'maplibre-gl';
 import { createBusLayer } from './bus-layer.js';
 import { createGreeneryLayer } from './greenery-layer.js';
 import { createTrainLayer } from './train-layer.js';
+import { railPath, estimatedTrains } from './rail-estimates.js';
+import { createTrafficLayer } from './traffic-layer.js';
 import { setupSunPreview } from './sun-preview.js';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -89,6 +91,8 @@ const selection = document.querySelector('#selection-content');
 let busModelLayer;
 let greeneryLayer;
 let trainModelLayer;
+let trafficModelLayer;
+let railNetworkVisible = false;
 const kifissiaStation = [23.808219792, 38.073395087];
 const emptyFeatures = () => ({ type: 'FeatureCollection', features: [] });
 const layerVisibility = (toggle) => document.querySelector(`#${toggle}`).checked ? 'visible' : 'none';
@@ -133,6 +137,12 @@ map.on('load', async () => {
       'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
       'fill-extrusion-opacity': 0.82,
     },
+  }, labelLayer);
+  map.addSource('copernicus-buildings', { type: 'geojson', data: emptyFeatures(), attribution: 'Copernicus Urban Atlas 2021 Building Block Height · Athens GIS' });
+  map.addLayer({ id: 'copernicus-buildings', type: 'fill-extrusion', source: 'copernicus-buildings', minzoom: 14,
+    layout: { visibility: 'none' },
+    paint: { 'fill-extrusion-color': ['step', ['get', 'height_m'], '#c9d0b2', 8, '#d3bb8e', 15, '#b78b68', 25, '#627b91'],
+      'fill-extrusion-height': ['get', 'height_m'], 'fill-extrusion-opacity': 0.86 },
   }, labelLayer);
   setupSunPreview(map);
 
@@ -257,12 +267,12 @@ map.on('load', async () => {
 
   map.addSource('metro-line1', { type: 'geojson', data: localData('metro-line1'), attribution: 'Athens GIS · CC BY 4.0' });
   map.addLayer({ id: 'metro-line1', type: 'line', source: 'metro-line1',
-    layout: { visibility: layerVisibility('metro-toggle') },
+    layout: { visibility: 'none' },
     paint: { 'line-color': '#a0444d', 'line-width': 4, 'line-opacity': 0.88 },
   }, labelLayer);
   map.addSource('metro-stations', { type: 'geojson', data: localData('metro-stations'), attribution: 'Athens GIS · CC BY 4.0' });
   map.addLayer({ id: 'metro-stations', type: 'circle', source: 'metro-stations',
-    layout: { visibility: layerVisibility('metro-toggle') },
+    layout: { visibility: 'none' },
     paint: { 'circle-color': '#f8f6ec', 'circle-radius': 6, 'circle-stroke-color': '#a0444d', 'circle-stroke-width': 2.5 },
   });
   const trainIcon = document.createElement('button');
@@ -272,6 +282,7 @@ map.on('load', async () => {
   trainIcon.innerHTML = '<svg class="rail-station-marker__icon" viewBox="0 0 40 24" aria-hidden="true"><path d="M2 4h15v13H2zM23 4h15v13H23zM17 12h6M1 22h38" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 7h4v4H5zM11 7h4v4h-4zM26 7h4v4h-4zM32 7h4v4h-4z" fill="currentColor"/><circle cx="6" cy="19" r="1.7" fill="currentColor"/><circle cx="13" cy="19" r="1.7" fill="currentColor"/><circle cx="27" cy="19" r="1.7" fill="currentColor"/><circle cx="34" cy="19" r="1.7" fill="currentColor"/></svg><span class="rail-station-marker__name">M1 Kifissia</span>';
   const trainMarker = new maplibregl.Marker({ element: trainIcon, anchor: 'bottom' })
     .setLngLat(kifissiaStation).addTo(map);
+  trainMarker.getElement().hidden = true;
   trainIcon.addEventListener('click', (event) => {
     event.stopPropagation();
     clearBusSelection();
@@ -279,11 +290,28 @@ map.on('load', async () => {
   });
   void loadTrainModel();
   document.querySelector('#metro-toggle').addEventListener('change', (event) => {
-    trainMarker.getElement().hidden = !event.target.checked;
-    for (const id of ['metro-line1', 'metro-stations']) map.setLayoutProperty(id, 'visibility', event.target.checked ? 'visible' : 'none');
     if (map.getLayer('train-model-hit')) map.setLayoutProperty('train-model-hit', 'visibility', event.target.checked ? 'visible' : 'none');
     if (trainModelLayer) { trainModelLayer.visible = event.target.checked; map.triggerRepaint(); }
     if (!event.target.checked) railPopup?.remove();
+  });
+  document.querySelector('#rail-network-button').addEventListener('click', (event) => {
+    railNetworkVisible = !railNetworkVisible;
+    for (const id of ['metro-line1', 'metro-stations']) map.setLayoutProperty(id, 'visibility', railNetworkVisible ? 'visible' : 'none');
+    trainMarker.getElement().hidden = !railNetworkVisible;
+    event.currentTarget.setAttribute('aria-pressed', String(railNetworkVisible));
+    event.currentTarget.textContent = railNetworkVisible ? 'Hide rail network' : 'Show rail network ↗';
+    if (railNetworkVisible) map.fitBounds([[23.778, 38.041], [23.815, 38.079]], { padding: 60, maxZoom: 14.5, pitch: 45, duration: 900 });
+  });
+
+  map.addSource('bus-network', { type: 'geojson', data: localData('bus-network'), attribution: 'OASA GTFS via athens-transit-rt · 8 Jul 2026' });
+  map.addLayer({ id: 'bus-network', type: 'line', source: 'bus-network', layout: { visibility: 'none' },
+    paint: { 'line-color': '#3085a1', 'line-width': 2, 'line-opacity': 0.66 } }, labelLayer);
+  document.querySelector('#bus-network-button').addEventListener('click', (event) => {
+    const visible = event.currentTarget.getAttribute('aria-pressed') !== 'true';
+    map.setLayoutProperty('bus-network', 'visibility', visible ? 'visible' : 'none');
+    event.currentTarget.setAttribute('aria-pressed', String(visible));
+    event.currentTarget.textContent = visible ? 'Hide bus network' : 'Show bus network ↗';
+    if (visible) map.fitBounds([[23.77, 38.059], [23.885, 38.123]], { padding: 45, maxZoom: 14, pitch: 45, duration: 900 });
   });
 
   map.addSource('selected-route', { type: 'geojson', data: emptyFeatures(), attribution: 'OASA GTFS via athens-transit-rt' });
@@ -344,6 +372,14 @@ map.on('load', async () => {
   } catch (error) {
     busModelLayer = null;
     console.warn('3D buses unavailable; showing directional map icons.', error);
+  }
+  try {
+    trafficModelLayer = createTrafficLayer(map);
+    map.addLayer(trafficModelLayer, 'live-bus-labels');
+    if (document.querySelector('#traffic-toggle').checked) void loadTraffic();
+  } catch (error) {
+    document.querySelector('#traffic-status').textContent = 'Illustrative car layer unavailable.';
+    console.warn('Illustrative traffic unavailable.', error);
   }
   map.addLayer({
     id: 'live-bus-hit', type: 'circle', source: 'live-buses',
@@ -412,24 +448,52 @@ async function loadGreenery() {
 
 async function loadTrainModel() {
   try {
-    const response = await fetch(`${import.meta.env.BASE_URL}data/kifisia-metro-line1.geojson`);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    const [start, next] = data.features[0].geometry.coordinates[0];
-    const anchor = start.map((value, index) => value + (next[index] - value) * 0.55);
-    const bearing = Math.atan2((next[0] - start[0]) * Math.cos(start[1] * Math.PI / 180), next[1] - start[1]) * 180 / Math.PI;
-    map.addSource('train-anchor', { type: 'geojson', data: { type: 'Feature', geometry: { type: 'Point', coordinates: anchor }, properties: {} } });
-    trainModelLayer = createTrainLayer(map, anchor, bearing);
+    const [line, stations] = await Promise.all(['metro-line1', 'metro-stations'].map((name) =>
+      fetchJson(`${import.meta.env.BASE_URL}data/kifisia-${name}.geojson`)));
+    const path = railPath(line, stations);
+    map.addSource('train-anchor', { type: 'geojson', data: emptyFeatures() });
+    trainModelLayer = createTrainLayer(map);
     map.addLayer(trainModelLayer, 'metro-stations');
     map.addLayer({ id: 'train-model-hit', type: 'circle', source: 'train-anchor', minzoom: 13,
       layout: { visibility: layerVisibility('metro-toggle') },
       paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 15, 20, 18, 42], 'circle-opacity': 0, 'circle-stroke-opacity': 0 },
     });
     trainModelLayer.visible = document.querySelector('#metro-toggle').checked;
+    const update = () => {
+      const trains = estimatedTrains(path);
+      trainModelLayer.setTrains(trains);
+      map.getSource('train-anchor').setData({ type: 'FeatureCollection', features: trains.map((train) => ({
+        type: 'Feature', geometry: { type: 'Point', coordinates: train.coordinate },
+        properties: { id: train.id, direction: train.direction, nextStation: train.nextStation },
+      })) });
+      document.querySelector('#train-status').textContent = `${trains.length} indicative trains on the Kifissia–Iraklio section · STASY frequency bands and station times. Positions are estimates, not live observations.`;
+    };
+    update();
+    setInterval(update, 1000);
   } catch (error) {
-    console.warn('Static 3D train model unavailable; station marker remains.', error);
+    document.querySelector('#train-status').textContent = `Train estimates unavailable: ${error.message}`;
+    console.warn('Estimated trains unavailable.', error);
   }
 }
+
+let trafficData;
+async function loadTraffic() {
+  if (!trafficModelLayer) return;
+  trafficModelLayer.visible = document.querySelector('#traffic-toggle').checked;
+  if (!trafficModelLayer.visible) { map.triggerRepaint(); return; }
+  if (!trafficData) {
+    try {
+      trafficData = await fetchJson(`${import.meta.env.BASE_URL}data/kifisia-traffic-roads.geojson`);
+      trafficModelLayer.setRoads(trafficData);
+    } catch (error) {
+      document.querySelector('#traffic-status').textContent = `Illustrative traffic unavailable: ${error.message}`;
+      return;
+    }
+  }
+  trafficModelLayer.refresh();
+  document.querySelector('#traffic-status').textContent = 'Illustrative 3D cars on OSM roads · 26 Oct 2026. Road class and Athens time set density and speed. Enlarged for visibility; no tracked cars or congestion data. Zoom 15+.';
+}
+document.querySelector('#traffic-toggle').addEventListener('change', loadTraffic);
 
 function selectionDetails(title, detail, note) {
   const content = document.createElement('div');
@@ -662,7 +726,7 @@ map.on('click', (event) => {
   buildingPopup?.remove();
   clearBusSelection();
   railPopup?.remove();
-  const layers = ['live-bus-hit', 'live-bus-labels', 'live-bus-icon', 'live-buses', 'municipal-closures-points', 'municipal-works-points', 'municipal-works-lines', 'train-model-hit', 'metro-stations', 'landmarks', 'civic-pois', 'traffic-lights', 'parcels-fill', 'sports', 'canopy-forms-hit', 'building-types', 'arch-sites', 'playgrounds', 'parks', 'public-spaces', 'rivers', 'flood-100', 'contours', 'land-cover', 'bus-stops', 'cycleways-centre', 'kifisia-buildings'].filter((id) => map.getLayer(id));
+  const layers = ['live-bus-hit', 'live-bus-labels', 'live-bus-icon', 'live-buses', 'municipal-closures-points', 'municipal-works-points', 'municipal-works-lines', 'train-model-hit', 'metro-stations', 'bus-network', 'landmarks', 'civic-pois', 'traffic-lights', 'parcels-fill', 'sports', 'canopy-forms-hit', 'building-types', 'copernicus-buildings', 'arch-sites', 'playgrounds', 'parks', 'public-spaces', 'rivers', 'flood-100', 'contours', 'land-cover', 'bus-stops', 'cycleways-centre', 'kifisia-buildings'].filter((id) => map.getLayer(id));
   const hits = map.queryRenderedFeatures(event.point, { layers });
   const feature = layers.map((id) => hits.find((hit) => hit.layer.id === id)).find(Boolean);
   if (!feature) return;
@@ -671,9 +735,12 @@ map.on('click', (event) => {
     showBuilding(event, feature.properties.name, works ? feature.properties.category : `${feature.properties.dateStatus} permit notice`,
       `${feature.properties.description || 'No description supplied'} · Municipality of Kifisia My Maps · check the source for changes`);
   } else if (feature.layer.id === 'train-model-hit') {
-    showRailStation(kifissiaStation, 'KIFISSIA');
+    showBuilding(event, `Estimated Line 1 train · toward ${feature.properties.direction}`, `Next station: ${feature.properties.nextStation}`,
+      'Indicative position from STASY frequency bands and station travel times · not a live train location');
   } else if (feature.layer.id === 'metro-stations') {
     showRailStation(feature.geometry.coordinates, feature.properties.name);
+  } else if (feature.layer.id === 'bus-network') {
+    showBuilding(event, `Bus line ${feature.properties.line}`, feature.properties.headsign || 'Mapped route', 'OASA GTFS snapshot · 8 Jul 2026. Route may have changed.');
   } else if (['landmarks', 'civic-pois'].includes(feature.layer.id)) {
     showSelection(feature.properties.name, feature.properties.category, feature.layer.id === 'landmarks' ? 'Municipal attractions · coordinates from OpenStreetMap' : 'Athens GIS / OpenStreetMap · verify details at source');
   } else if (feature.layer.id === 'arch-sites') {
@@ -695,6 +762,9 @@ map.on('click', (event) => {
       `Meta/WRI CHMv2 · 2019 local imagery; Copernicus tree cover 2024. Illustrative form, not an individual-tree record.`);
   } else if (feature.layer.id === 'building-types') {
     showBuilding(event, feature.properties.name || 'Tagged building', `${feature.properties.category} · OSM building=${feature.properties.building_type}`, 'OpenStreetMap snapshot · 26 Oct 2026. Building type is not verified current use.');
+  } else if (feature.layer.id === 'copernicus-buildings') {
+    showBuilding(event, 'Mapped building', `Approximate height: ${feature.properties.height_m} m`,
+      `OSM footprint · ${feature.properties.basis}. Copernicus 2021 source cells are 10 m; heights are approximate.`);
   } else if (feature.layer.id === 'rivers') {
     showSelection('Mapped watercourse', feature.properties.name_en || 'Kifisos tributary', 'Athens GIS stream network · line does not describe flood risk');
   } else if (feature.layer.id === 'flood-100') {
@@ -757,15 +827,32 @@ document.querySelector('#story-close').addEventListener('click', () => {
   storyMarker?.remove();
 });
 
-document.querySelector('#buildings-toggle').addEventListener('change', (event) => {
-  if (map.getLayer('kifisia-buildings')) {
-    map.setLayoutProperty('kifisia-buildings', 'visibility', event.target.checked ? 'visible' : 'none');
-    map.setLayoutProperty('building-types', 'visibility', event.target.checked && document.querySelector('#types-toggle').checked ? 'visible' : 'none');
+function updateBuildings() {
+  if (!map.getLayer('kifisia-buildings')) return;
+  const enabled = document.querySelector('#buildings-toggle').checked;
+  const copernicus = document.querySelector('#height-source').value === 'copernicus';
+  map.setLayoutProperty('kifisia-buildings', 'visibility', enabled && !copernicus ? 'visible' : 'none');
+  map.setLayoutProperty('copernicus-buildings', 'visibility', enabled && copernicus ? 'visible' : 'none');
+  map.setLayoutProperty('building-types', 'visibility', enabled && !copernicus && document.querySelector('#types-toggle').checked ? 'visible' : 'none');
+}
+let copernicusData;
+document.querySelector('#height-source').addEventListener('change', async (event) => {
+  const note = document.querySelector('#height-status');
+  if (event.target.value === 'copernicus' && !copernicusData) {
+    note.textContent = 'Loading Copernicus 2021 building heights…';
+    try {
+      copernicusData = await fetchJson(`${import.meta.env.BASE_URL}data/kifisia-sun-buildings.geojson`);
+      map.getSource('copernicus-buildings').setData(copernicusData);
+      note.textContent = `${copernicusData.features.length.toLocaleString('en-US')} OSM footprints · Copernicus 2021, 10 m source cells · some heights assumed at 8 m.`;
+    } catch (error) {
+      note.textContent = `Copernicus heights unavailable: ${error.message}`;
+      event.target.value = 'osm';
+    }
   }
+  updateBuildings();
 });
-document.querySelector('#types-toggle').addEventListener('change', (event) => {
-  if (map.getLayer('building-types')) map.setLayoutProperty('building-types', 'visibility', event.target.checked && document.querySelector('#buildings-toggle').checked ? 'visible' : 'none');
-});
+document.querySelector('#buildings-toggle').addEventListener('change', updateBuildings);
+document.querySelector('#types-toggle').addEventListener('change', updateBuildings);
 document.querySelector('#greenery-toggle').addEventListener('change', (event) => {
   if (!greeneryLayer) return;
   greeneryLayer.visible = event.target.checked;

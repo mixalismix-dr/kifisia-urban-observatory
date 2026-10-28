@@ -48,6 +48,8 @@
             <div class="section__head"><span>02</span><h2 id="layers-heading">Map layers</h2></div>
             <label class="basemap-choice" for="basemap-select">Base map <select id="basemap-select"><option value="street">Street map</option><option value="satellite" selected>Satellite imagery</option></select></label>
             <label class="layer"><span><i class="swatch swatch--built"></i>3D buildings</span><input id="buildings-toggle" type="checkbox" checked /><span class="switch" aria-hidden="true"></span></label>
+            <label class="basemap-choice" for="height-source">Building heights <select id="height-source"><option value="osm">OSM mapped</option><option value="copernicus">Copernicus 2021</option></select></label>
+            <p class="layer-note" id="height-status">Copernicus mode extrudes OSM footprints from 10 m building-block estimates; some footprints use an assumed 8 m. Heights are illustrative.</p>
             <label class="layer"><span><i class="swatch swatch--sun"></i>Sun &amp; building shade</span><input id="sun-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
             <div class="sun-controls" id="sun-controls" hidden>
               <label for="sun-date">Date</label><input id="sun-date" type="date" />
@@ -69,6 +71,8 @@
             <p class="layer-note" id="greenery-status">Loading modeled canopy forms…</p>
             <div class="density-key" aria-label="Tree cover color scale from 1 to 100 percent"><span>1%</span><i></i><span>100%</span></div>
             <label class="layer"><span><i class="swatch swatch--roads"></i>Main roads</span><input id="roads-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+            <label class="layer"><span><i class="swatch swatch--traffic"></i>Estimated street traffic</span><input id="traffic-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+            <p class="layer-note" id="traffic-status">Illustrative 3D cars on OSM roads · 26 Oct 2026 snapshot. Road class and Athens time set density and speed. No tracked cars or congestion measurements. Visible from zoom 15.</p>
             <label class="layer"><span><i class="swatch swatch--works"></i>Municipal works</span><input id="works-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
             <p class="layer-note" id="works-status">Municipality of Kifisia · load current published map</p>
             <label class="layer"><span><i class="swatch swatch--closures"></i>Closure notices</span><input id="closures-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
@@ -82,8 +86,12 @@
             <label class="layer"><span><i class="swatch swatch--buses"></i>Live buses</span><input id="buses-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
             <p class="layer-note" id="bus-feed-status">Community OASA feed · switch on to load positions</p>
             <p class="layer-note">3D buses sit at reported positions and face their reported heading. A dot means direction is missing. Models are enlarged for legibility.</p>
-            <label class="layer"><span><i class="swatch swatch--rail"></i>Metro Line 1 &amp; stations</span><input id="metro-toggle" type="checkbox" checked /><span class="switch" aria-hidden="true"></span></label>
-            <p class="layer-note">Athens GIS · static route and stations. The 3D train at Kifissia is a route symbol, not a live vehicle. Select it for the stop list.</p>
+            <button class="network-button" id="bus-network-button" type="button" aria-pressed="false">Show bus network ↗</button>
+            <p class="layer-note">26 lines serving mapped Kifisia stops · OASA GTFS snapshot 8 Jul 2026. Routes may have changed.</p>
+            <label class="layer"><span><i class="swatch swatch--rail"></i>Moving Line 1 trains · estimated</span><input id="metro-toggle" type="checkbox" checked /><span class="switch" aria-hidden="true"></span></label>
+            <p class="layer-note" id="train-status">Indicative positions from STASY frequency bands and station travel times. These are not live train positions or exact departures.</p>
+            <button class="network-button" id="rail-network-button" type="button" aria-pressed="false">Show rail network ↗</button>
+            <p class="layer-note">Athens GIS Line 1 track and stations · select a station for the route and stop list.</p>
             <details class="layer-group" open>
               <summary>Landscape &amp; water</summary>
               <label class="layer"><span><i class="swatch swatch--parks"></i>Parks &amp; groves <small>118</small></span><input id="parks-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
