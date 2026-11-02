@@ -5,11 +5,13 @@ import { createTrainLayer } from './train-layer.js';
 import { railPath, estimatedTrains } from './rail-estimates.js';
 import { createTrafficLayer } from './traffic-layer.js';
 import { setupSunPreview } from './sun-preview.js';
+import { initI18n } from './i18n.js';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';
 
 maplibregl.setWorkerUrl(workerUrl);
+initI18n();
 
 const places = {
   kifisia: [23.8082244, 38.0736082],
@@ -598,7 +600,10 @@ async function loadTraffic() {
     map.setPaintProperty('kifisias-traffic', 'line-opacity', 0.5);
   }
   trafficModelLayer.refresh();
-  document.querySelector('#traffic-status').textContent = `${status} Gray avenue line means no recent bulletin. Other roads: estimated cars. No tracked car positions or traffic counts. Zoom 15+ for cars.`;
+  document.querySelector('#traffic-status').replaceChildren(
+    document.createTextNode(status),
+    document.createTextNode(' Gray avenue line means no recent bulletin. Other roads: estimated cars. No tracked car positions or traffic counts. Zoom 15+ for cars.'),
+  );
 }
 document.querySelector('#traffic-toggle').addEventListener('change', loadTraffic);
 setInterval(() => { if (document.querySelector('#traffic-toggle').checked) void loadTraffic(); }, 10 * 60 * 1000);

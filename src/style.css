@@ -8,8 +8,11 @@ button { cursor: pointer; }
 a { color: inherit; }
 .app { display: grid; grid-template-columns: 360px minmax(0, 1fr); height: 100vh; height: 100dvh; min-height: 580px; }
 .sidebar { background: #f4f2e8; display: flex; flex-direction: column; border-right: 1px solid #c9cfc2; z-index: 2; overflow: auto; }
-.identity { display: flex; align-items: center; gap: 14px; padding: 27px 28px 25px; background: #20362c; color: #f7f4e9; }
+.identity { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; padding: 27px 28px 20px; background: #20362c; color: #f7f4e9; }
 .mobile-layers-toggle { display: none; }
+.language-choice { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; margin-top: 8px; color: #c5d2c5; font-size: 11px; }
+.language-choice select { color: #f7f4e9; background: #2d4839; border: 1px solid #879e88; padding: 5px 7px; font: inherit; }
+.language-choice select:focus-visible { outline: 2px solid #f7f4e9; outline-offset: 2px; }
 .identity__mark { width: 43px; height: 43px; border: 1px solid #a7bea9; display: grid; place-items: center; font: 27px Georgia, serif; border-radius: 50%; }
 .eyebrow, .edition, .section__head span, .map-title span, .map-status, .map-legend, .reset-view, .sidebar__footer, .selection__note { font-family: 'DM Mono', monospace; }
 .eyebrow { text-transform: uppercase; font-size: 10px; letter-spacing: .15em; color: #a8c4aa; margin-bottom: 5px; }
@@ -198,6 +201,7 @@ h2 { font-size: 13px; letter-spacing: .01em; margin: 0; font-weight: 700; }
   .identity h1 span { font-size: 11px; }
   .mobile-layers-toggle { display: block; margin-left: auto; min-height: 44px; padding: 8px 11px; border: 1px solid #8ba991; background: transparent; color: #f7f4e9; font-size: 12px; }
   .mobile-layers-toggle[aria-expanded="true"] { background: #395d47; }
+  .language-choice select { min-height: 44px; font-size: 16px; }
   .sidebar__body { padding: 14px 18px 16px; }
   .edition, .description, .selection, .sidebar__footer { display: none; }
   .intro { display: none; }
