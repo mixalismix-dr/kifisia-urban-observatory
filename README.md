@@ -15,6 +15,10 @@ npm run dev
 
 Open the URL printed by Vite. `npm run build` creates the static site in `dist/`.
 
+## Mobile WebView
+
+The map uses a compact layer panel on phones, touch-sized controls, safe-area spacing and resizes after orientation or viewport changes. Map selections open over the map, and the local-plan drawings can be enlarged and panned inside their viewer. The page works in a modern Android WebView or iOS WKWebView with JavaScript, WebGL and network access enabled. Native wrappers must handle external `target="_blank"` source links; the website cannot open a second WebView on its own.
+
 ## Map data
 
 | Layer | Source | How it is used | Limit |

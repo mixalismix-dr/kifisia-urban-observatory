@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#1c2924" />
     <meta name="description" content="A 3D open-data map of Kifisia with landscape, terrain, heritage, transport and municipal sources." />
     <title>Kifisia · Urban Observatory</title>
@@ -16,9 +16,10 @@
             <div class="eyebrow">Attica · Greece</div>
             <h1>Kifisia<span>Urban Observatory</span></h1>
           </div>
+          <button class="mobile-layers-toggle" id="mobile-layers-toggle" type="button" aria-controls="sidebar-body" aria-expanded="false">Layers</button>
         </header>
 
-        <div class="sidebar__body">
+        <div class="sidebar__body" id="sidebar-body">
           <div class="edition">OPEN DATA ATLAS <span>02 NOV 2026</span></div>
           <p class="intro">Read the shape of the city.</p>
           <p class="description">Explore buildings, landscape, water, places and transport across Kifisia. Each layer names its source and date.</p>
@@ -189,6 +190,7 @@
       <div class="tps-dialog__head"><div><small>ΥΠΕΝ · LOCAL PLAN · KIFISIA MUNICIPAL UNIT</small><h2 id="tps-dialog-title">Three proposed spatial scenarios</h2></div><button id="tps-close" type="button" aria-label="Close proposal maps">×</button></div>
       <p>Official July 2025 study drawings. These are proposals and have not been georeferenced as legal parcel boundaries.</p>
       <label for="tps-scenario">Scenario <select id="tps-scenario"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></label>
+      <button id="tps-image-zoom" class="tps-image-zoom" type="button" aria-pressed="false">Enlarge drawing</button>
       <div class="tps-dialog__image"><img id="tps-image" alt="Official alternative spatial planning scenario for the Kifisia Municipal Unit" /></div>
       <a href="https://polsxedia.ypen.gov.gr/tps_details/%CE%925_129" target="_blank" rel="noopener noreferrer">View the official study and explanation ↗</a>
     </dialog>

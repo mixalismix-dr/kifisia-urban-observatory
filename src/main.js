@@ -114,12 +114,36 @@ const map = new maplibregl.Map({
   bearing: -22,
   maxBounds: localBounds,
   attributionControl: false,
-  canvasContextAttributes: { antialias: true },
+  canvasContextAttributes: { antialias: !matchMedia('(pointer: coarse)').matches },
 });
+
+const mobileLayersButton = document.querySelector('#mobile-layers-toggle');
+mobileLayersButton.addEventListener('click', () => {
+  const open = document.querySelector('.app').classList.toggle('layers-open');
+  mobileLayersButton.setAttribute('aria-expanded', String(open));
+  mobileLayersButton.textContent = open ? 'Close' : 'Layers';
+  requestAnimationFrame(() => map.resize());
+});
+if (window.ResizeObserver) new ResizeObserver(() => map.resize()).observe(document.querySelector('.map-stage'));
+else window.addEventListener('resize', () => map.resize());
+window.visualViewport?.addEventListener('resize', () => map.resize());
 
 map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-right');
 map.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: 'metric' }), 'bottom-right');
 map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
+if (matchMedia('(pointer: coarse)').matches) {
+  const attribution = document.querySelector('.maplibregl-ctrl-attrib');
+  let attributionOpened = false;
+  const attributionButton = attribution.querySelector('summary');
+  attributionButton?.addEventListener('click', () => { attributionOpened = true; }, { capture: true, once: true });
+  const collapseAttribution = () => {
+    if (!attributionOpened && attribution.classList.contains('maplibregl-compact-show')) {
+      attribution.classList.remove('maplibregl-compact-show');
+    }
+  };
+  new MutationObserver(collapseAttribution).observe(attribution, { attributes: true, attributeFilter: ['class'] });
+  collapseAttribution();
+}
 
 map.on('load', async () => {
   map.setPaintProperty('park', 'fill-color', '#b6cbb0');
@@ -861,11 +885,11 @@ map.on('click', (event) => {
   } else if (feature.layer.id === 'bus-network') {
     showBuilding(event, `Bus line ${feature.properties.line}`, feature.properties.headsign || 'Mapped route', 'OASA GTFS snapshot · 8 Jul 2026. Route may have changed.');
   } else if (['landmarks', 'civic-pois'].includes(feature.layer.id)) {
-    showSelection(feature.properties.name, feature.properties.category, feature.layer.id === 'landmarks' ? 'Municipal attractions · coordinates from OpenStreetMap' : 'Athens GIS / OpenStreetMap · verify details at source');
+    showBuilding(event, feature.properties.name, feature.properties.category, feature.layer.id === 'landmarks' ? 'Municipal attractions · coordinates from OpenStreetMap' : 'Athens GIS / OpenStreetMap · verify details at source');
   } else if (feature.layer.id === 'arch-sites') {
-    showSelection(feature.properties.name || feature.properties.name_en || 'Mapped historic site', feature.properties.historic || 'Historic feature', 'Athens GIS archaeological-sites layer');
+    showBuilding(event, feature.properties.name || feature.properties.name_en || 'Mapped historic site', feature.properties.historic || 'Historic feature', 'Athens GIS archaeological-sites layer');
   } else if (['parks', 'playgrounds'].includes(feature.layer.id)) {
-    showSelection(feature.properties.name || (feature.layer.id === 'parks' ? 'Mapped park' : 'Mapped playground'), feature.layer.id === 'parks' ? 'Park or public green space' : 'Playground', 'Athens GIS open data · mapped extent may be incomplete');
+    showBuilding(event, feature.properties.name || (feature.layer.id === 'parks' ? 'Mapped park' : 'Mapped playground'), feature.layer.id === 'parks' ? 'Park or public green space' : 'Playground', 'Athens GIS open data · mapped extent may be incomplete');
   } else if (feature.layer.id === 'public-spaces') {
     showBuilding(event, feature.properties.name || `Mapped ${feature.properties.category.toLowerCase()}`, feature.properties.category,
       'Athens GIS open data · access and ownership may be unverified');
@@ -888,7 +912,7 @@ map.on('click', (event) => {
   } else if (feature.layer.id === 'tps-study-area') {
     showTps();
   } else if (feature.layer.id === 'sports') {
-    showSelection(feature.properties.name || 'Mapped sports site', [feature.properties.facility, feature.properties.sport].filter(Boolean).join(' · '), 'OpenStreetMap snapshot · 26 Oct 2026. Facility access and availability may differ.');
+    showBuilding(event, feature.properties.name || 'Mapped sports site', [feature.properties.facility, feature.properties.sport].filter(Boolean).join(' · '), 'OpenStreetMap snapshot · 26 Oct 2026. Facility access and availability may differ.');
   } else if (feature.layer.id === 'canopy-forms-hit') {
     showBuilding(event, 'Modeled canopy', `Approximate top height: ${feature.properties.height_m} m`,
       `Meta/WRI CHMv2 · 2019 local imagery; Copernicus tree cover 2024. Illustrative form, not an individual-tree record.`);
@@ -898,21 +922,21 @@ map.on('click', (event) => {
     showBuilding(event, 'Mapped building', `Approximate height: ${feature.properties.height_m} m`,
       `OSM footprint · ${feature.properties.basis}. Copernicus 2021 source cells are 10 m; heights are approximate.`);
   } else if (feature.layer.id === 'rivers') {
-    showSelection('Mapped watercourse', feature.properties.name_en || 'Kifisos tributary', 'Athens GIS stream network · line does not describe flood risk');
+    showBuilding(event, 'Mapped watercourse', feature.properties.name_en || 'Kifisos tributary', 'Athens GIS stream network · line does not describe flood risk');
   } else if (feature.layer.id === 'flood-100') {
-    showSelection('Modeled 100-year flood zone', 'Official Attica flood-risk plan · first revision', 'Scenario extent, not a current flood or a prediction for this location');
+    showBuilding(event, 'Modeled 100-year flood zone', 'Official Attica flood-risk plan · first revision', 'Scenario extent, not a current flood or a prediction for this location');
   } else if (feature.layer.id === 'contours') {
-    showSelection(`${feature.properties.elevation_m} m surface contour`, '20 m interval · derived from Copernicus 30 m DSM', 'Surface elevation includes canopy and buildings');
+    showBuilding(event, `${feature.properties.elevation_m} m surface contour`, '20 m interval · derived from Copernicus 30 m DSM', 'Surface elevation includes canopy and buildings');
   } else if (feature.layer.id === 'land-cover') {
-    showSelection(feature.properties.class_2021, '2021 land cover and land use', 'Athens GIS · mapped class, not parcel zoning');
+    showBuilding(event, feature.properties.class_2021, '2021 land cover and land use', 'Athens GIS · mapped class, not parcel zoning');
   } else if (feature.layer.id === 'land-cover-2018') {
-    showSelection(feature.properties.Name || 'Mapped land cover', '2018 CORINE land cover', 'Copernicus via Athens GIS · coarse classification, not parcel zoning');
+    showBuilding(event, feature.properties.Name || 'Mapped land cover', '2018 CORINE land cover', 'Copernicus via Athens GIS · coarse classification, not parcel zoning');
   } else if (feature.layer.id === 'bus-stops') {
-    showSelection(feature.properties.name || 'Bus stop', `Routes: ${feature.properties.route_ref || 'Not listed'}`, 'OASA stops via Athens GIS · published 21 Oct 2026');
+    showBuilding(event, feature.properties.name || 'Bus stop', `Routes: ${feature.properties.route_ref || 'Not listed'}`, 'OASA stops via Athens GIS · published 21 Oct 2026');
   } else if (['live-bus-hit', 'live-bus-labels', 'live-bus-icon', 'live-buses'].includes(feature.layer.id)) {
     selectBus(event, feature.properties);
   } else if (feature.layer.id === 'cycleways-centre') {
-    showSelection(feature.properties.name || 'Mapped bike facility', feature.properties.facility, 'OpenStreetMap way · Kifisia centre extract, 25 Oct 2026');
+    showBuilding(event, feature.properties.name || 'Mapped bike facility', feature.properties.facility, 'OpenStreetMap way · Kifisia centre extract, 25 Oct 2026');
   } else {
     const height = Number(feature.properties.render_height);
     showBuilding(event, feature.properties.name || 'Mapped building', Number.isFinite(height) && height > 0 ? `Mapped height: ${height.toFixed(1)} m` : 'No mapped height available', 'OpenFreeMap / OpenMapTiles. Heights may be estimated.');
@@ -1032,12 +1056,18 @@ document.querySelector('#land-cover-year').addEventListener('change', updateLand
 const tpsDialog = document.querySelector('#tps-dialog');
 const tpsScenario = document.querySelector('#tps-scenario');
 const tpsImage = document.querySelector('#tps-image');
+const tpsImageZoom = document.querySelector('#tps-image-zoom');
 function showTps() {
   tpsImage.src = `${import.meta.env.BASE_URL}data/kifisia-tps-scenario-${tpsScenario.value}.jpg`;
   tpsDialog.showModal();
 }
 document.querySelector('#tps-view-button').addEventListener('click', showTps);
 document.querySelector('#tps-close').addEventListener('click', () => tpsDialog.close());
+tpsImageZoom.addEventListener('click', () => {
+  const enlarged = tpsDialog.querySelector('.tps-dialog__image').classList.toggle('is-zoomed');
+  tpsImageZoom.setAttribute('aria-pressed', String(enlarged));
+  tpsImageZoom.textContent = enlarged ? 'Fit drawing to screen' : 'Enlarge drawing';
+});
 tpsScenario.addEventListener('change', () => { tpsImage.src = `${import.meta.env.BASE_URL}data/kifisia-tps-scenario-${tpsScenario.value}.jpg`; });
 document.querySelector('#tps-dialog').addEventListener('click', (event) => { if (event.target === tpsDialog) tpsDialog.close(); });
 for (const [input, other, layer] of [['ndvi-toggle', 'trees-toggle', 'tree-cover'], ['trees-toggle', 'ndvi-toggle', 'ndvi']]) {
