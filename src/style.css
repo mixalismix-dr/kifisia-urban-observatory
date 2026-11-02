@@ -84,6 +84,8 @@ h2 { font-size: 13px; letter-spacing: .01em; margin: 0; font-weight: 700; }
 .swatch--flood { background: #277fa6; opacity: .55; }
 .swatch--walking { border-top: 3px dashed #a46a3f; height: 3px; }
 .swatch--landuse { background: linear-gradient(135deg, #6e9e70 50%, #e5d0b4 50%); }
+.swatch--forest { background: linear-gradient(135deg, #27774c 50%, #bd7656 50%); }
+.swatch--tps { border: 2px dashed #a14b73; }
 .swatch--dsm { background: linear-gradient(135deg, #e2ddb8, #387263); }
 .swatch--contours { border-top: 2px solid #5e5a46; height: 2px; }
 .swatch--landmarks { background: #9b5471; border-radius: 50%; }
@@ -171,6 +173,18 @@ h2 { font-size: 13px; letter-spacing: .01em; margin: 0; font-weight: 700; }
 .rail-station-marker[hidden] { display: none; }
 .rail-station-marker__icon { display: block; width: 32px; height: 20px; color: #a0444d; }
 .rail-station-marker__name { font: 10px 'DM Mono', monospace; white-space: nowrap; }
+.tps-dialog { width: min(1100px, 94vw); max-height: 92dvh; padding: 18px; border: 1px solid #9eb7a5; background: #f8f6ec; color: #20362c; box-shadow: 0 16px 60px #142a25a8; }
+.tps-dialog::backdrop { background: #10251dc9; }
+.tps-dialog__head { display: flex; justify-content: space-between; gap: 15px; align-items: start; }
+.tps-dialog__head small { font: 10px 'DM Mono', monospace; letter-spacing: .08em; color: #587361; }
+.tps-dialog h2 { margin: 5px 0 8px; font-size: 22px; }
+.tps-dialog p { max-width: 680px; font-size: 12px; line-height: 1.5; }
+.tps-dialog__head button { border: 0; background: none; color: #365744; font-size: 27px; cursor: pointer; }
+.tps-dialog label { display: block; margin: 10px 0; font: 11px 'DM Mono', monospace; }
+.tps-dialog select { padding: 5px; margin-left: 6px; }
+.tps-dialog__image { max-height: 65dvh; overflow: auto; border: 1px solid #ccd7c8; background: #e7e9e0; }
+.tps-dialog__image img { display: block; width: 100%; min-width: 900px; height: auto; }
+.tps-dialog > a { display: inline-block; margin-top: 10px; font-size: 11px; color: #294b35; }
 @media (max-width: 760px) {
   .app { display: flex; flex-direction: column; height: 100dvh; min-height: 0; }
   .sidebar { max-height: 42dvh; overflow: auto; flex: none; }

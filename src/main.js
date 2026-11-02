@@ -178,6 +178,38 @@ map.on('load', async () => {
       ['Open spaces with little or no vegetation (beaches, dunes, bare rocks, glaciers)', 'Land without current use'], '#c8c4a6',
       '#e5d0b4'], 'fill-opacity': 0.66, 'fill-outline-color': '#ffffff55' },
   }, 'kifisia-buildings');
+  map.addSource('land-cover-2018', { type: 'geojson', data: localData('land-cover-2018'), attribution: 'Copernicus CORINE 2018 · Athens GIS' });
+  map.addLayer({ id: 'land-cover-2018', type: 'fill', source: 'land-cover-2018',
+    layout: { visibility: 'none' }, paint: { 'fill-color': ['match', ['get', 'Code_18'],
+      '311', '#6e9e70', '312', '#6e9e70', '313', '#6e9e70', '141', '#8eb5aa', '142', '#8eb5aa',
+      '121', '#b9a8a0', '122', '#b9a8a0', '#e5d0b4'], 'fill-opacity': 0.66, 'fill-outline-color': '#ffffff55' },
+  }, 'kifisia-buildings');
+
+  map.addSource('planning-uses', { type: 'geojson', data: localData('planning-uses'), attribution: 'TEE Unified Digital Map · ΓΠΣ / ΕΡΣ decisions' });
+  map.addLayer({ id: 'planning-uses', type: 'fill', source: 'planning-uses',
+    layout: { visibility: layerVisibility('planning-toggle') },
+    paint: { 'fill-color': ['match', ['get', 'category'],
+      'Green space', '#59966d', 'Residential', '#e7d3aa', 'Mixed residential', '#d8af83',
+      'Centre', '#c17d76', 'Civic', '#6888a0', 'Production', '#987c91', '#aba99b'],
+      'fill-opacity': 0.57, 'fill-outline-color': '#465648' },
+  }, 'kifisia-buildings');
+  map.addSource('designated-spaces', { type: 'geojson', data: localData('designated-spaces'), attribution: 'TEE Unified Digital Map · designated public and civic spaces' });
+  map.addLayer({ id: 'designated-spaces', type: 'fill', source: 'designated-spaces',
+    layout: { visibility: layerVisibility('designated-toggle') },
+    paint: { 'fill-color': '#6c9ca5', 'fill-opacity': 0.6, 'fill-outline-color': '#285977' },
+  }, 'kifisia-buildings');
+  map.addSource('forest-status', { type: 'geojson', data: localData('forest-status'), attribution: 'TEE / Hellenic Cadastre · partly ratified Attica forest map, 2 Jun 2021' });
+  map.addLayer({ id: 'forest-status', type: 'fill', source: 'forest-status',
+    layout: { visibility: layerVisibility('forest-toggle') },
+    paint: { 'fill-color': ['match', ['get', 'code'],
+      'ΔΔ', '#27774c', 'ΔΑ', '#bd7656', 'ΑΔ', '#83a65a', 'ΑΑ', '#d9c59e', 'ΠΑ', '#b8aaa1', '#9c9c9c'],
+      'fill-opacity': 0.62, 'fill-outline-color': '#405b45' },
+  }, 'kifisia-buildings');
+  map.addSource('tps-study-area', { type: 'geojson', data: localData('tps-study-area'), attribution: 'ΥΠΕΝ · Kifisia local plan study boundary' });
+  map.addLayer({ id: 'tps-study-area', type: 'line', source: 'tps-study-area',
+    layout: { visibility: layerVisibility('tps-toggle') },
+    paint: { 'line-color': '#a14b73', 'line-width': 3, 'line-dasharray': [3, 2] },
+  }, labelLayer);
 
   map.addSource('dsm', {
     type: 'image', url: `${import.meta.env.BASE_URL}data/kifisia-dsm.png`,
@@ -547,7 +579,7 @@ async function loadTraffic() {
 document.querySelector('#traffic-toggle').addEventListener('change', loadTraffic);
 setInterval(() => { if (document.querySelector('#traffic-toggle').checked) void loadTraffic(); }, 10 * 60 * 1000);
 
-function selectionDetails(title, detail, note) {
+function selectionDetails(title, detail, note, sourceUrl) {
   const content = document.createElement('div');
   for (const [tag, className, value] of [['strong', 'selection__title', title], ['p', 'selection__detail', detail], ['p', 'selection__note', note]]) {
     const element = document.createElement(tag);
@@ -555,16 +587,24 @@ function selectionDetails(title, detail, note) {
     element.textContent = value;
     content.append(element);
   }
+  if (sourceUrl?.startsWith('https://')) {
+    const link = document.createElement('a');
+    link.href = sourceUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = 'Read source ΦΕΚ ↗';
+    content.append(link);
+  }
   return content;
 }
-function showSelection(title, detail, note) { selection.replaceChildren(selectionDetails(title, detail, note)); }
+function showSelection(title, detail, note, sourceUrl) { selection.replaceChildren(selectionDetails(title, detail, note, sourceUrl)); }
 
 let buildingPopup;
-function showBuilding(event, title, detail, note) {
-  showSelection(title, detail, note);
+function showBuilding(event, title, detail, note, sourceUrl) {
+  showSelection(title, detail, note, sourceUrl);
   buildingPopup = new maplibregl.Popup({ className: 'building-popup', closeOnClick: false, maxWidth: '260px', offset: 12 })
     .setLngLat(event.lngLat)
-    .setDOMContent(selectionDetails(title, detail, note))
+    .setDOMContent(selectionDetails(title, detail, note, sourceUrl))
     .addTo(map);
 }
 
@@ -802,7 +842,7 @@ map.on('click', (event) => {
   buildingPopup?.remove();
   clearBusSelection();
   railPopup?.remove();
-  const layers = ['live-bus-hit', 'live-bus-labels', 'live-bus-icon', 'live-buses', 'municipal-places', 'municipal-closures-points', 'municipal-works-points', 'municipal-works-lines', 'train-model-hit', 'metro-stations', 'bus-network', 'landmarks', 'civic-pois', 'traffic-lights', 'parcels-fill', 'sports', 'canopy-forms-hit', 'building-types', 'copernicus-buildings', 'arch-sites', 'playgrounds', 'parks', 'public-spaces', 'rivers', 'flood-100', 'contours', 'land-cover', 'bus-stops', 'cycleways-centre', 'kifisia-buildings'].filter((id) => map.getLayer(id));
+  const layers = ['live-bus-hit', 'live-bus-labels', 'live-bus-icon', 'live-buses', 'municipal-places', 'municipal-closures-points', 'municipal-works-points', 'municipal-works-lines', 'train-model-hit', 'metro-stations', 'bus-network', 'landmarks', 'civic-pois', 'traffic-lights', 'parcels-fill', 'planning-uses', 'designated-spaces', 'forest-status', 'tps-study-area', 'sports', 'canopy-forms-hit', 'building-types', 'copernicus-buildings', 'arch-sites', 'playgrounds', 'parks', 'public-spaces', 'rivers', 'flood-100', 'contours', 'land-cover', 'land-cover-2018', 'bus-stops', 'cycleways-centre', 'kifisia-buildings'].filter((id) => map.getLayer(id));
   const hits = map.queryRenderedFeatures(event.point, { layers });
   const feature = layers.map((id) => hits.find((hit) => hit.layer.id === id)).find(Boolean);
   if (!feature) return;
@@ -834,6 +874,19 @@ map.on('click', (event) => {
   } else if (feature.layer.id === 'parcels-fill') {
     showBuilding(event, `ΚΑΕΚ ${feature.properties.KAEK}`, `Source record date ${feature.properties.bLfSpnVr || 'unavailable'}`,
       'Πηγή δεδομένων: Ν.Π.Δ. ΕΛΛΗΝΙΚΟ ΚΤΗΜΑΤΟΛΟΓΙΟ · 22 Oct 2026 snapshot. Parcel identifier only; no ownership data.');
+  } else if (feature.layer.id === 'planning-uses') {
+    showBuilding(event, feature.properties.use, `${feature.properties.plan} · ΦΕΚ ${feature.properties.fek} · ${feature.properties.date}`,
+      'TEE digitized planning decision. Overlapping historical decisions may exist; verify current applicability in the ΦΕΚ.', feature.properties.fekUrl);
+  } else if (feature.layer.id === 'designated-spaces') {
+    showBuilding(event, feature.properties.use, `ΦΕΚ ${feature.properties.fek} · ${feature.properties.date}`,
+      'TEE digitized public / civic space designation. Verify current status in the ΦΕΚ.', feature.properties.fekUrl);
+  } else if (feature.layer.id === 'forest-status') {
+    const meanings = { 'ΔΔ': 'Forest in past and recent imagery', 'ΔΑ': 'Forest in past, other cover recently',
+      'ΑΔ': 'Other cover in past, forest recently', 'ΑΑ': 'Other cover in both periods', 'ΠΑ': 'Final non-forest designation' };
+    showBuilding(event, `Forest-map code ${feature.properties.code}`, meanings[feature.properties.code] || 'See official legend',
+      'Partly ratified Attica forest map · 2 Jun 2021 snapshot. Check current Cadastre map for legal use.');
+  } else if (feature.layer.id === 'tps-study-area') {
+    showTps();
   } else if (feature.layer.id === 'sports') {
     showSelection(feature.properties.name || 'Mapped sports site', [feature.properties.facility, feature.properties.sport].filter(Boolean).join(' · '), 'OpenStreetMap snapshot · 26 Oct 2026. Facility access and availability may differ.');
   } else if (feature.layer.id === 'canopy-forms-hit') {
@@ -852,6 +905,8 @@ map.on('click', (event) => {
     showSelection(`${feature.properties.elevation_m} m surface contour`, '20 m interval · derived from Copernicus 30 m DSM', 'Surface elevation includes canopy and buildings');
   } else if (feature.layer.id === 'land-cover') {
     showSelection(feature.properties.class_2021, '2021 land cover and land use', 'Athens GIS · mapped class, not parcel zoning');
+  } else if (feature.layer.id === 'land-cover-2018') {
+    showSelection(feature.properties.Name || 'Mapped land cover', '2018 CORINE land cover', 'Copernicus via Athens GIS · coarse classification, not parcel zoning');
   } else if (feature.layer.id === 'bus-stops') {
     showSelection(feature.properties.name || 'Bus stop', `Routes: ${feature.properties.route_ref || 'Not listed'}`, 'OASA stops via Athens GIS · published 21 Oct 2026');
   } else if (['live-bus-hit', 'live-bus-labels', 'live-bus-icon', 'live-buses'].includes(feature.layer.id)) {
@@ -953,7 +1008,9 @@ document.querySelector('#boundary-toggle').addEventListener('change', (event) =>
 for (const [input, layers] of [
   ['trees-toggle', ['tree-cover']], ['ndvi-toggle', ['ndvi']], ['roads-toggle', ['main-roads']],
   ['bike-toggle', ['cycleways', 'cycleways-centre']], ['stops-toggle', ['bus-stops']],
-  ['landuse-toggle', ['land-cover']], ['dsm-toggle', ['dsm']], ['contours-toggle', ['contours']],
+  ['planning-toggle', ['planning-uses']], ['designated-toggle', ['designated-spaces']],
+  ['forest-toggle', ['forest-status']], ['tps-toggle', ['tps-study-area']],
+  ['dsm-toggle', ['dsm']], ['contours-toggle', ['contours']],
   ['flood-toggle', ['flood-100']], ['sports-toggle', ['sports']],
   ['parks-toggle', ['parks']], ['public-toggle', ['public-spaces']], ['playgrounds-toggle', ['playgrounds']], ['heritage-toggle', ['arch-sites']],
   ['water-toggle', ['rivers']], ['civic-toggle', ['civic-pois']], ['landmarks-toggle', ['landmarks']], ['signals-toggle', ['traffic-lights']],
@@ -963,6 +1020,26 @@ for (const [input, layers] of [
     for (const layer of layers) if (map.getLayer(layer)) map.setLayoutProperty(layer, 'visibility', event.target.checked ? 'visible' : 'none');
   });
 }
+function updateLandCoverYear() {
+  for (const year of ['2018', '2021']) {
+    const layer = year === '2021' ? 'land-cover' : 'land-cover-2018';
+    if (map.getLayer(layer)) map.setLayoutProperty(layer, 'visibility',
+      document.querySelector('#landuse-toggle').checked && document.querySelector('#land-cover-year').value === year ? 'visible' : 'none');
+  }
+}
+document.querySelector('#landuse-toggle').addEventListener('change', updateLandCoverYear);
+document.querySelector('#land-cover-year').addEventListener('change', updateLandCoverYear);
+const tpsDialog = document.querySelector('#tps-dialog');
+const tpsScenario = document.querySelector('#tps-scenario');
+const tpsImage = document.querySelector('#tps-image');
+function showTps() {
+  tpsImage.src = `${import.meta.env.BASE_URL}data/kifisia-tps-scenario-${tpsScenario.value}.jpg`;
+  tpsDialog.showModal();
+}
+document.querySelector('#tps-view-button').addEventListener('click', showTps);
+document.querySelector('#tps-close').addEventListener('click', () => tpsDialog.close());
+tpsScenario.addEventListener('change', () => { tpsImage.src = `${import.meta.env.BASE_URL}data/kifisia-tps-scenario-${tpsScenario.value}.jpg`; });
+document.querySelector('#tps-dialog').addEventListener('click', (event) => { if (event.target === tpsDialog) tpsDialog.close(); });
 for (const [input, other, layer] of [['ndvi-toggle', 'trees-toggle', 'tree-cover'], ['trees-toggle', 'ndvi-toggle', 'ndvi']]) {
   document.querySelector(`#${input}`).addEventListener('change', (event) => {
     if (!event.target.checked) return;

@@ -19,7 +19,7 @@
         </header>
 
         <div class="sidebar__body">
-          <div class="edition">OPEN DATA ATLAS <span>26 OCT 2026</span></div>
+          <div class="edition">OPEN DATA ATLAS <span>02 NOV 2026</span></div>
           <p class="intro">Read the shape of the city.</p>
           <p class="description">Explore buildings, landscape, water, places and transport across Kifisia. Each layer names its source and date.</p>
 
@@ -43,9 +43,24 @@
               <p class="layer-note">OSM · 26 Oct 2026 · colors cover tagged types only. Other buildings stay tan. Tags describe type, not verified use.</p>
               <div class="type-key" aria-label="Building type colors"><span><i style="background:#b88272"></i>Residential</span><span><i style="background:#627fa2"></i>Civic &amp; health</span><span><i style="background:#c49b4a"></i>Business</span><span><i style="background:#9a77a8"></i>Worship</span><span><i style="background:#848f91"></i>Industrial</span><span><i style="background:#8ca6a0"></i>Ancillary</span></div>
               <label class="layer"><span><i class="swatch swatch--boundary"></i>Municipal boundary</span><input id="boundary-toggle" type="checkbox" checked /><span class="switch" aria-hidden="true"></span></label>
+            </details>
+            <details class="layer-group">
+              <summary>Planning &amp; land status<small class="layer-group__count"></small></summary>
               <label class="layer"><span><i class="swatch swatch--parcels"></i>ΚΑΕΚ parcels <small>19,140</small></span><input id="parcels-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <p class="layer-note">Hellenic Cadastre · 22 Oct 2026 snapshot. Zoom in and select a parcel for its ΚΑΕΚ. No ownership data. Source: <a href="https://data.gov.gr/dataset/geotemachia-oria-kai-kaek-ton-periochon-toy-leitoyrgoyntos-ktimatologioy" target="_blank" rel="noopener noreferrer">data.gov.gr ↗</a></p>
               <p class="layer-note" id="parcels-status" role="status"></p>
+              <label class="layer"><span><i class="swatch swatch--landuse"></i>Published planning uses <small>296</small></span><input id="planning-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+              <p class="layer-note">TEE Digital Map · ΓΠΣ and ΕΡΣ polygons. Select an area for its use, decision date and ΦΕΚ. <a href="https://sdigmap.tee.gov.gr/sdmportal/el/gia-polites" target="_blank" rel="noopener noreferrer">Source ↗</a> Historical decisions may overlap; check the cited ΦΕΚ for current status.</p>
+              <label class="layer"><span><i class="swatch swatch--public"></i>Designated civic spaces <small>557</small></span><input id="designated-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+              <p class="layer-note">TEE Digital Map · official planning designations, including squares, schools and green spaces. Select a polygon for its ΦΕΚ. <a href="https://sdigmap.tee.gov.gr/mapping/rest/services/UDM/UDM_SERVICE_POLEODOMIKI_PLIROFORIA/MapServer/22" target="_blank" rel="noopener noreferrer">Source ↗</a></p>
+              <label class="layer"><span><i class="swatch swatch--forest"></i>Ratified forest map · 2021 <small>210</small></span><input id="forest-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+              <p class="layer-note">TEE / Hellenic Cadastre · partly ratified Attica map, 2 Jun 2021. Select an area for its forest-map code. For current legal status, use the <a href="https://www.ktimatologio.gr/e-services/15" target="_blank" rel="noopener noreferrer">Cadastre viewer ↗</a>.</p>
+              <label class="layer"><span><i class="swatch swatch--tps"></i>New local plan · study area</span><input id="tps-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+              <p class="layer-note">ΥΠΕΝ · three alternative proposals for the Kifisia Municipal Unit, dated 8 Jul 2025. The outline is mapped; scenario drawings are available in the viewer. These are proposals, not enacted zoning. <a href="https://polsxedia.ypen.gov.gr/tps_details/%CE%925_129" target="_blank" rel="noopener noreferrer">Source ↗</a></p>
+              <button class="network-button" id="tps-view-button" type="button">View the 3 proposal maps ↗</button>
+              <label class="layer"><span><i class="swatch swatch--landuse"></i>Observed land cover</span><input id="landuse-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+              <label class="basemap-choice" for="land-cover-year">Reference year <select id="land-cover-year"><option value="2021" selected>2021 · Urban Atlas</option><option value="2018">2018 · CORINE</option></select></label>
+              <p class="layer-note">Copernicus via Athens GIS · 2021 detailed Urban Atlas and 2018 coarse CORINE. The two maps have different detail; do not interpret individual polygon differences as measured change. No verified 2025 land-use map is available. <a href="https://athensgis.gr/about" target="_blank" rel="noopener noreferrer">Source ↗</a></p>
             </details>
             <details class="layer-group">
               <summary>Green &amp; terrain<small class="layer-group__count"></small></summary>
@@ -60,8 +75,6 @@
               <label class="layer"><span><i class="swatch swatch--parks"></i>Parks &amp; groves <small>118</small></span><input id="parks-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <label class="layer"><span><i class="swatch swatch--public"></i>Mapped public spaces <small>176</small></span><input id="public-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <p class="layer-note">Athens GIS parks, playgrounds, gardens and squares. Some access and ownership are unverified; select an area for its type.</p>
-              <label class="layer"><span><i class="swatch swatch--landuse"></i>Land cover &amp; use</span><input id="landuse-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
-              <p class="layer-note">Athens GIS · 2021 · green vegetation, tan urban, gray industry. Select a polygon for its class. Not zoning.</p>
               <label class="layer"><span><i class="swatch swatch--dsm"></i>Surface elevation</span><input id="dsm-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <label class="layer"><span><i class="swatch swatch--contours"></i>20 m contours</span><input id="contours-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <p class="layer-note">Copernicus GLO-30 DSM · 30 m pixels · 2021 release · pale low to dark high. Includes buildings and trees. Bare-earth DTM unavailable.</p>
@@ -172,6 +185,13 @@
         <div class="map-legend" aria-label="Map legend"><span><i class="legend-key legend-key--green"></i>Green space · base map</span><span><i class="legend-key legend-key--line"></i>Municipal boundary</span></div>
       </main>
     </div>
+    <dialog id="tps-dialog" class="tps-dialog" aria-labelledby="tps-dialog-title">
+      <div class="tps-dialog__head"><div><small>ΥΠΕΝ · LOCAL PLAN · KIFISIA MUNICIPAL UNIT</small><h2 id="tps-dialog-title">Three proposed spatial scenarios</h2></div><button id="tps-close" type="button" aria-label="Close proposal maps">×</button></div>
+      <p>Official July 2025 study drawings. These are proposals and have not been georeferenced as legal parcel boundaries.</p>
+      <label for="tps-scenario">Scenario <select id="tps-scenario"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></label>
+      <div class="tps-dialog__image"><img id="tps-image" alt="Official alternative spatial planning scenario for the Kifisia Municipal Unit" /></div>
+      <a href="https://polsxedia.ypen.gov.gr/tps_details/%CE%925_129" target="_blank" rel="noopener noreferrer">View the official study and explanation ↗</a>
+    </dialog>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

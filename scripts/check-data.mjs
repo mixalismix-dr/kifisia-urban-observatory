@@ -22,6 +22,11 @@ for (const [file, geometry] of [
   ['kifisia-building-types.geojson', ['Polygon', 'MultiPolygon']],
   ['kifisia-sports.geojson', ['Polygon', 'MultiPolygon']],
   ['kifisia-land-cover-2021.geojson', ['Polygon', 'MultiPolygon']],
+  ['kifisia-land-cover-2018.geojson', ['Polygon', 'MultiPolygon']],
+  ['kifisia-planning-uses.geojson', ['Polygon', 'MultiPolygon']],
+  ['kifisia-designated-spaces.geojson', ['Polygon', 'MultiPolygon']],
+  ['kifisia-forest-status.geojson', ['Polygon', 'MultiPolygon']],
+  ['kifisia-tps-study-area.geojson', 'Polygon'],
   ['kifisia-civic-pois.geojson', 'Point'],
   ['kifisia-landmarks.geojson', 'Point'],
   ['kifisia-canopy-forms.geojson', 'Point'],
@@ -31,6 +36,11 @@ for (const [file, geometry] of [
   assert.ok(data.features.length > 0, `${file} has no features`);
   assert.ok(data.features.every((feature) => feature.geometry && [geometry].flat().includes(feature.geometry.type)), `${file} has unexpected geometry`);
 }
+const planning = JSON.parse(readFileSync(new URL('../public/data/kifisia-planning-uses.geojson', import.meta.url), 'utf8'));
+assert.ok(planning.features.some(({ properties }) => properties.plan === 'ΓΠΣ' && properties.fekUrl?.startsWith('https://')));
+assert.ok(planning.features.some(({ properties }) => properties.plan === 'ΕΡΣ' && properties.fekUrl?.startsWith('https://')));
+const forest = JSON.parse(readFileSync(new URL('../public/data/kifisia-forest-status.geojson', import.meta.url), 'utf8'));
+assert.ok(forest.features.every(({ properties }) => ['ΔΔ', 'ΔΑ', 'ΑΔ', 'ΑΑ', 'ΠΑ'].includes(properties.code)));
 
 const canopy = JSON.parse(readFileSync(new URL('../public/data/kifisia-canopy-forms.geojson', import.meta.url), 'utf8'));
 assert.ok(canopy.features.length > 1000);
