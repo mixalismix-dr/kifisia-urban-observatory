@@ -43,7 +43,6 @@
               </div>
               <label class="layer"><span><i class="swatch swatch--types"></i>Tagged building types <small>933</small></span><input id="types-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <p class="layer-note">OSM · 26 Oct 2026 · colors cover tagged types only. Other buildings stay tan. Tags describe type, not verified use.</p>
-              <div class="type-key" aria-label="Building type colors"><span><i style="background:#b88272"></i>Residential</span><span><i style="background:#627fa2"></i>Civic &amp; health</span><span><i style="background:#c49b4a"></i>Business</span><span><i style="background:#9a77a8"></i>Worship</span><span><i style="background:#848f91"></i>Industrial</span><span><i style="background:#8ca6a0"></i>Ancillary</span></div>
               <label class="layer"><span><i class="swatch swatch--boundary"></i>Municipal boundary</span><input id="boundary-toggle" type="checkbox" checked /><span class="switch" aria-hidden="true"></span></label>
             </details>
             <details class="layer-group">
@@ -59,7 +58,7 @@
               <p class="layer-note">TEE / Hellenic Cadastre · partly ratified Attica map, 2 Jun 2021. Select an area for its forest-map code. For current legal status, use the <a href="https://www.ktimatologio.gr/e-services/15" target="_blank" rel="noopener noreferrer">Cadastre viewer ↗</a>.</p>
               <label class="layer"><span><i class="swatch swatch--tps"></i>New local plan · study area</span><input id="tps-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <p class="layer-note">ΥΠΕΝ · three alternative proposals for the Kifisia Municipal Unit, dated 8 Jul 2025. Select a scenario and a marked location to read what changes there. Markers identify broad areas, not proposed parcel boundaries. These are proposals, not enacted zoning. <a href="https://polsxedia.ypen.gov.gr/tps_details/%CE%925_129" target="_blank" rel="noopener noreferrer">Source ↗</a></p>
-              <div class="tps-controls" id="tps-controls" hidden><label for="tps-map-scenario">Scenario on map</label><select id="tps-map-scenario"><option value="1">1 · Trends / no new intervention</option><option value="2">2 · Moderate intervention</option><option value="3">3 · Strong intervention</option></select><p id="tps-map-note">Select a purple marker to compare the scenario at that location.</p></div>
+              <div class="tps-controls" id="tps-controls" hidden><label for="tps-map-scenario">Scenario on map</label><select id="tps-map-scenario"><option value="1">1 · Trends / no new intervention</option><option value="2">2 · Moderate intervention</option><option value="3">3 · Strong intervention</option></select><p class="tps-summary" id="tps-scenario-summary" aria-live="polite"></p><p id="tps-map-note">Select a purple marker to compare the scenario at that location.</p></div>
               <button class="network-button" id="tps-view-button" type="button">View the 3 proposal maps ↗</button>
               <label class="layer"><span><i class="swatch swatch--landuse"></i>Observed land cover</span><input id="landuse-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <label class="basemap-choice" for="land-cover-year">Reference year <select id="land-cover-year"><option value="2021" selected>2021 · Urban Atlas</option><option value="2018">2018 · CORINE</option></select></label>
@@ -71,10 +70,8 @@
               <p class="layer-note">Copernicus · 2024 reference year · 10 m source pixels · crown cover 1–100%</p>
               <label class="layer"><span><i class="swatch swatch--ndvi"></i>Vegetation index · NDVI</span><input id="ndvi-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <p class="layer-note"><a href="https://earth-search.aws.element84.com/v1/collections/sentinel-2-l2a/items/S2B_34SGH_20260911_0_L2A" target="_blank" rel="noopener noreferrer">Sentinel-2 scene ↗</a> · 11 Sep 2026 · 10 m pixels · cloud masked. Greener means stronger vegetation signal, not plant health.</p>
-              <div class="ndvi-key" aria-label="NDVI color scale from minus 0.2 to 1"><span>−0.2</span><i></i><span>1.0</span></div>
               <label class="layer"><span><i class="swatch swatch--greenery"></i>3D greenery</span><input id="greenery-toggle" type="checkbox" checked /><span class="switch" aria-hidden="true"></span></label>
               <p class="layer-note" id="greenery-status">Loading modeled canopy forms…</p>
-              <div class="density-key" aria-label="Tree cover color scale from 1 to 100 percent"><span>1%</span><i></i><span>100%</span></div>
               <label class="layer"><span><i class="swatch swatch--parks"></i>Parks &amp; groves <small>118</small></span><input id="parks-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <label class="layer"><span><i class="swatch swatch--public"></i>Mapped public spaces <small>176</small></span><input id="public-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <p class="layer-note">Athens GIS parks, playgrounds, gardens and squares. Some access and ownership are unverified; select an area for its type.</p>
@@ -184,13 +181,17 @@
         </article>
         <div class="map-status" id="map-status" role="status">Loading map…</div>
         <button class="reset-view" id="reset-view" type="button" aria-label="Show the whole municipality">↗ <span>Whole municipality</span></button>
-        <details class="map-legend" id="map-legend"><summary>Map legend</summary><div id="map-legend-items"></div></details>
+        <details class="map-legend" id="map-legend" open><summary>Map legend</summary><div id="map-legend-items"></div></details>
+        <template id="type-legend-template"><div class="type-key" aria-label="Building type colors"><span><i style="background:#b88272"></i>Residential</span><span><i style="background:#627fa2"></i>Civic &amp; health</span><span><i style="background:#c49b4a"></i>Business</span><span><i style="background:#9a77a8"></i>Worship</span><span><i style="background:#848f91"></i>Industrial</span><span><i style="background:#8ca6a0"></i>Ancillary</span></div></template>
+        <template id="ndvi-legend-template"><div class="ndvi-key" aria-label="NDVI color scale from minus 0.2 to 1"><span>−0.2</span><i></i><span>1.0</span></div></template>
+        <template id="density-legend-template"><div class="density-key" aria-label="Tree cover color scale from 1 to 100 percent"><span>1%</span><i></i><span>100%</span></div></template>
       </main>
     </div>
     <dialog id="tps-dialog" class="tps-dialog" aria-labelledby="tps-dialog-title">
       <div class="tps-dialog__head"><div><small>ΥΠΕΝ · LOCAL PLAN · KIFISIA MUNICIPAL UNIT</small><h2 id="tps-dialog-title">Three proposed spatial scenarios</h2></div><button id="tps-close" type="button" aria-label="Close proposal maps">×</button></div>
-      <p>Official July 2025 study drawings. These are proposals and have not been georeferenced as legal parcel boundaries.</p>
+      <p>Official July 2025 study drawings.</p>
       <label for="tps-scenario">Scenario <select id="tps-scenario"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></label>
+      <p class="tps-summary" id="tps-dialog-summary" aria-live="polite"></p>
       <button id="tps-image-zoom" class="tps-image-zoom" type="button" aria-pressed="false">Enlarge drawing</button>
       <div class="tps-dialog__image"><img id="tps-image" alt="Official alternative spatial planning scenario for the Kifisia Municipal Unit" /></div>
       <a href="https://polsxedia.ypen.gov.gr/tps_details/%CE%925_129" target="_blank" rel="noopener noreferrer">View the official study and explanation ↗</a>

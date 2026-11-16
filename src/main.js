@@ -11,6 +11,12 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';
 
 maplibregl.setWorkerUrl(workerUrl);
+const legendLabels = Object.fromEntries([...document.querySelectorAll('.layer input[type="checkbox"]')].map((input) => {
+  const label = input.closest('label').querySelector('span').cloneNode(true);
+  label.querySelector('small')?.remove();
+  return [input.id, label.textContent.trim()];
+}));
+const baseMapLabels = Object.fromEntries([...document.querySelectorAll('#basemap-select option')].map((option) => [option.value, option.textContent]));
 initI18n();
 
 const places = {
@@ -97,6 +103,11 @@ let trafficModelLayer;
 let railNetworkVisible = false;
 const kifissiaStation = [23.808219792, 38.073395087];
 const tpsStudyUrl = 'https://polsxedia.ypen.gov.gr/media/media/%CE%9110_PXg4CX7.pdf';
+const tpsSummaries = {
+  1: 'Scenario 1 · Trends: current planning rules and existing plans continue, without the new interventions of scenarios 2 and 3.',
+  2: 'Scenario 2 · Moderate intervention: updated land uses, planning for part of the Kalyftaki industrial area, selected planning-unit extensions, and an undergrounded Kifissia terminal with Line 1 extended toward Nea Erythraia are proposed.',
+  3: 'Scenario 3 · Strong intervention: scenario 2 transport and production proposals remain. Local centres change; the proposed average floor-area ratio is 0.6 in units 3, 6 and 7, and 0.4 in units 5, 12, 13 and 14.',
+};
 // These are named-area pointers from section A10, not digitized proposal boundaries.
 const tpsHighlights = [
   { point: kifissiaStation, name: 'Kifissia station',
@@ -132,6 +143,8 @@ function updateLayerCounts() {
 layerPanel.addEventListener('change', updateLayerCounts);
 updateLayerCounts();
 const legend = document.querySelector('#map-legend');
+if (matchMedia('(max-width: 760px)').matches) legend.open = false;
+const legendTemplates = { 'types-toggle': 'type-legend-template', 'trees-toggle': 'density-legend-template', 'ndvi-toggle': 'ndvi-legend-template' };
 const legendGroups = [
   ['boundary-toggle', 'Municipal boundary', [['Municipal boundary', '#254d3d', 'line']]],
   ['tps-toggle', 'Local plan proposals', [['Study area · Kifisia Municipal Unit', '#a14b73', 'line'], ['Indicative proposal location · select for details', '#a14b73', 'point']]],
@@ -144,16 +157,26 @@ const legendGroups = [
 function updateMapLegend(event) {
   const content = document.querySelector('#map-legend-items');
   content.replaceChildren();
-  for (const [toggle, title, entries] of legendGroups) {
-    if (!document.querySelector(`#${toggle}`).checked) continue;
+  const base = document.createElement('div');
+  base.className = 'map-legend__group';
+  const baseTitle = document.createElement('strong');
+  baseTitle.textContent = 'Base map';
+  const baseName = document.createElement('span');
+  baseName.textContent = baseMapLabels[document.querySelector('#basemap-select').value];
+  base.append(baseTitle, baseName);
+  content.append(base);
+  for (const input of layerPanel.querySelectorAll('.layer input[type="checkbox"]:checked')) {
+    const [toggle, title, entries] = legendGroups.find(([id]) => id === input.id) || [input.id, legendLabels[input.id], null];
     const visibleEntries = toggle === 'landuse-toggle' && document.querySelector('#land-cover-year').value === '2018'
       ? entries.filter(([label]) => !['Grassland and pasture', 'Open or unused land'].includes(label)) : entries;
     const group = document.createElement('div');
     group.className = 'map-legend__group';
     const heading = document.createElement('strong');
     heading.textContent = title;
+    if (!entries && !legendTemplates[toggle]) heading.prepend(input.closest('label').querySelector('.swatch').cloneNode(true));
     group.append(heading);
-    for (const [label, color, shape] of visibleEntries) {
+    if (legendTemplates[toggle]) group.append(document.querySelector(`#${legendTemplates[toggle]}`).content.cloneNode(true));
+    for (const [label, color, shape] of visibleEntries || []) {
       const row = document.createElement('span');
       const key = document.createElement('i');
       key.className = `map-legend__key map-legend__key--${shape || 'fill'}`;
@@ -164,7 +187,24 @@ function updateMapLegend(event) {
     }
     content.append(group);
   }
-  if (event?.target?.checked && event.target.id !== 'boundary-toggle') legend.open = true;
+  for (const [buttonId, title, label, color] of [
+    ['bus-network-button', 'Bus network', 'Mapped bus routes', '#3085a1'],
+    ['rail-network-button', 'Rail network', 'Line 1 track and stations', '#a0444d'],
+  ]) {
+    if (document.querySelector(`#${buttonId}`).getAttribute('aria-pressed') !== 'true') continue;
+    const group = document.createElement('div');
+    group.className = 'map-legend__group';
+    const heading = document.createElement('strong');
+    heading.textContent = title;
+    const row = document.createElement('span');
+    const key = document.createElement('i');
+    key.className = 'map-legend__key map-legend__key--line';
+    key.style.borderColor = color;
+    row.append(key, document.createTextNode(label));
+    group.append(heading, row);
+    content.append(group);
+  }
+  if (event?.target?.checked || event?.target?.getAttribute('aria-pressed') === 'true' || event?.target?.id === 'basemap-select') legend.open = true;
 }
 layerPanel.addEventListener('change', updateMapLegend);
 updateMapLegend();
@@ -439,6 +479,7 @@ map.on('load', async () => {
     trainMarker.getElement().hidden = !railNetworkVisible;
     event.currentTarget.setAttribute('aria-pressed', String(railNetworkVisible));
     event.currentTarget.textContent = railNetworkVisible ? 'Hide rail network' : 'Show rail network ↗';
+    updateMapLegend(event);
     if (railNetworkVisible) map.fitBounds([[23.778, 38.041], [23.815, 38.079]], { padding: 60, maxZoom: 14.5, pitch: 45, duration: 900 });
   });
 
@@ -450,6 +491,7 @@ map.on('load', async () => {
     map.setLayoutProperty('bus-network', 'visibility', visible ? 'visible' : 'none');
     event.currentTarget.setAttribute('aria-pressed', String(visible));
     event.currentTarget.textContent = visible ? 'Hide bus network' : 'Show bus network ↗';
+    updateMapLegend(event);
     if (visible) map.fitBounds([[23.77, 38.059], [23.885, 38.123]], { padding: 45, maxZoom: 14, pitch: 45, duration: 900 });
   });
 
@@ -1135,6 +1177,10 @@ const tpsScenario = document.querySelector('#tps-scenario');
 const tpsMapScenario = document.querySelector('#tps-map-scenario');
 const tpsImage = document.querySelector('#tps-image');
 const tpsImageZoom = document.querySelector('#tps-image-zoom');
+function updateTpsSummary() {
+  for (const id of ['tps-scenario-summary', 'tps-dialog-summary']) document.querySelector(`#${id}`).textContent = tpsSummaries[tpsMapScenario.value];
+}
+updateTpsSummary();
 function showTps() {
   tpsScenario.value = tpsMapScenario.value;
   tpsImage.src = `${import.meta.env.BASE_URL}data/kifisia-tps-scenario-${tpsScenario.value}.jpg`;
@@ -1154,6 +1200,7 @@ function clearTpsSelection() {
   selection.append(prompt);
 }
 tpsMapScenario.addEventListener('change', clearTpsSelection);
+tpsMapScenario.addEventListener('change', updateTpsSummary);
 document.querySelector('#tps-view-button').addEventListener('click', showTps);
 document.querySelector('#tps-close').addEventListener('click', () => tpsDialog.close());
 tpsImageZoom.addEventListener('click', () => {
@@ -1165,6 +1212,7 @@ tpsScenario.addEventListener('change', () => {
   tpsMapScenario.value = tpsScenario.value;
   tpsImage.src = `${import.meta.env.BASE_URL}data/kifisia-tps-scenario-${tpsScenario.value}.jpg`;
   clearTpsSelection();
+  updateTpsSummary();
 });
 document.querySelector('#tps-dialog').addEventListener('click', (event) => { if (event.target === tpsDialog) tpsDialog.close(); });
 for (const [input, other, layer] of [['ndvi-toggle', 'trees-toggle', 'tree-cover'], ['trees-toggle', 'ndvi-toggle', 'ndvi']]) {
