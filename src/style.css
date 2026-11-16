@@ -11,7 +11,7 @@ a { color: inherit; }
 .identity { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; padding: 27px 28px 20px; background: #20362c; color: #f7f4e9; }
 .mobile-layers-toggle { display: none; }
 .identity__controls { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 3px 12px; width: 100%; }
-.language-choice { grid-column: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 32px; color: #c5d2c5; font-size: 11px; }
+.language-choice { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 32px; color: #c5d2c5; font-size: 11px; }
 .language-choice select { color: #f7f4e9; background: #2d4839; border: 1px solid #879e88; border-radius: 8px; padding: 5px 7px; font: inherit; }
 .language-choice select:focus-visible { outline: 2px solid #f7f4e9; outline-offset: 2px; }
 .theme-switch { grid-column: 1; grid-row: 2; display: flex; align-items: center; gap: 6px; min-height: 32px; color: #d6e3d7; font-size: 10px; white-space: nowrap; cursor: pointer; }
@@ -21,8 +21,8 @@ a { color: inherit; }
 .theme-switch input:checked + .theme-switch__track { background: #568f66; }
 .theme-switch input:checked + .theme-switch__track::after { transform: translateX(14px); }
 .theme-switch input:focus-visible + .theme-switch__track { outline: 2px solid #f7f4e9; outline-offset: 3px; }
-.tour-launch { grid-column: 2; grid-row: 1 / 3; align-self: center; min-height: 32px; border: 1px solid #8fa991; border-radius: 999px; padding: 4px 9px; background: #2d4839; color: #f7f4e9; font: 700 11px 'Inter', sans-serif; }
-.tour-launch span { margin-left: 3px; font-weight: 500; }
+.tour-launch { grid-column: 2; grid-row: 2; justify-self: end; display: inline-flex; align-items: center; justify-content: center; gap: 3px; min-height: 32px; border: 1px solid #8fa991; border-radius: 999px; padding: 4px 9px; background: #2d4839; color: #f7f4e9; font: 700 11px 'Inter', sans-serif; }
+.tour-launch span { font-weight: 500; }
 .tour-launch:hover, .tour-launch:focus-visible { background: #3a6049; }
 .identity__mark { width: 43px; height: 43px; border: 1px solid #a7bea9; display: grid; place-items: center; font: 27px 'Inter', sans-serif; border-radius: 50%; }
 .eyebrow, .edition, .section__head span, .map-title span, .map-status, .map-legend, .reset-view, .selection__note { font-family: 'Inter', sans-serif; }
