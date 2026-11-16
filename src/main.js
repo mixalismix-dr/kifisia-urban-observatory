@@ -18,6 +18,14 @@ const legendLabels = Object.fromEntries([...document.querySelectorAll('.layer in
   return [input.id, label.textContent.trim()];
 }));
 initI18n();
+const themeToggle = document.querySelector('#theme-toggle');
+function setTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  themeToggle.textContent = theme === 'dark' ? 'Light mode' : 'Dark mode';
+  localStorage.setItem('kifisia-theme', theme);
+}
+setTheme(localStorage.getItem('kifisia-theme') === 'dark' ? 'dark' : 'light');
+themeToggle.addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
 
 const places = {
   kifisia: [23.8082244, 38.0736082],
@@ -143,7 +151,7 @@ function updateLayerCounts() {
 layerPanel.addEventListener('change', updateLayerCounts);
 updateLayerCounts();
 const legend = document.querySelector('#map-legend');
-if (matchMedia('(max-width: 760px)').matches) legend.open = false;
+if (matchMedia('(max-width: 900px)').matches) legend.open = false;
 const legendTemplates = { 'types-toggle': 'type-legend-template', 'trees-toggle': 'density-legend-template', 'ndvi-toggle': 'ndvi-legend-template' };
 const legendSources = {
   'buildings-toggle': () => document.querySelector('#height-source').value === 'copernicus' ? 'OpenStreetMap / Copernicus Urban Atlas 2021' : 'OpenFreeMap / OpenStreetMap', 'sun-toggle': 'OpenStreetMap / Copernicus Urban Atlas 2021',
@@ -181,7 +189,7 @@ function appendLegendSource(group, source, control) {
   info.setAttribute('aria-labelledby', `${info.id} ${heading.id}`);
   info.textContent = 'More information';
   info.addEventListener('click', () => {
-    if (matchMedia('(max-width: 760px)').matches && !document.querySelector('.app').classList.contains('layers-open')) document.querySelector('#mobile-layers-toggle').click();
+    if (matchMedia('(max-width: 900px)').matches && !document.querySelector('.app').classList.contains('layers-open')) document.querySelector('#mobile-layers-toggle').click();
     const target = control.closest('.layer-group');
     if (target) target.open = true;
     requestAnimationFrame(() => control.scrollIntoView({ behavior: 'smooth', block: 'center' }));

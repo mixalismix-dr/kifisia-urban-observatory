@@ -17,7 +17,7 @@
             <h1>Kifisia<span>Urban Observatory</span></h1>
           </div>
           <button class="mobile-layers-toggle" id="mobile-layers-toggle" type="button" aria-controls="sidebar-body" aria-expanded="false">Layers</button>
-          <label class="language-choice" for="language-select"><span>Γλώσσα / Language</span><select id="language-select" aria-label="Γλώσσα / Language"><option value="el">Ελληνικά</option><option value="en">English</option></select></label>
+          <div class="identity__controls"><label class="language-choice" for="language-select"><span>Γλώσσα / Language</span><select id="language-select" aria-label="Γλώσσα / Language"><option value="el">Ελληνικά</option><option value="en">English</option></select></label><button id="theme-toggle" type="button">Dark mode</button></div>
         </header>
 
         <div class="sidebar__body" id="sidebar-body">
@@ -32,6 +32,8 @@
               <label class="layer"><span><i class="swatch swatch--built"></i>3D buildings</span><input id="buildings-toggle" type="checkbox" checked /><span class="switch" aria-hidden="true"></span></label>
               <label class="basemap-choice" for="height-source">Building heights <select id="height-source"><option value="osm">OSM mapped</option><option value="copernicus">Copernicus 2021</option></select></label>
               <p class="layer-note" id="height-status">Copernicus mode extrudes OSM footprints from 10 m building-block estimates; some footprints use an assumed 8 m. Heights are illustrative.</p>
+              <p class="layer-note">Building heights are generalized map data, not survey measurements.</p>
+              <p class="layer-note"><a href="https://openfreemap.org/" target="_blank" rel="noopener noreferrer">OpenFreeMap ↗</a></p>
               <label class="layer"><span><i class="swatch swatch--sun"></i>Sun &amp; building shade</span><input id="sun-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <div class="sun-controls" id="sun-controls" hidden>
                 <label for="sun-date">Date</label><input id="sun-date" type="date" />
@@ -43,6 +45,7 @@
               <label class="layer"><span><i class="swatch swatch--types"></i>Tagged building types <small>933</small></span><input id="types-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <p class="layer-note">OSM · 26 Oct 2026 · colors cover tagged types only. Other buildings stay tan. Tags describe type, not verified use.</p>
               <label class="layer"><span><i class="swatch swatch--boundary"></i>Municipal boundary</span><input id="boundary-toggle" type="checkbox" checked /><span class="switch" aria-hidden="true"></span></label>
+              <p class="layer-note"><a href="https://www.openstreetmap.org/relation/2080716" target="_blank" rel="noopener noreferrer">OpenStreetMap boundary ↗</a></p>
             </details>
             <details class="layer-group">
               <summary>Planning &amp; land status<small class="layer-group__count"></small></summary>
@@ -67,13 +70,16 @@
               <summary>Green &amp; terrain<small class="layer-group__count"></small></summary>
               <label class="layer"><span><i class="swatch swatch--trees"></i>Tree cover density</span><input id="trees-toggle" type="checkbox" checked /><span class="switch" aria-hidden="true"></span></label>
               <p class="layer-note">Copernicus · 2024 reference year · 10 m source pixels · crown cover 1–100%</p>
+              <p class="layer-note"><a href="https://land.copernicus.eu/en/products/high-resolution-layer-forests-and-tree-cover?tab=tree_cover_density" target="_blank" rel="noopener noreferrer">Tree cover dataset ↗</a></p>
               <label class="layer"><span><i class="swatch swatch--ndvi"></i>Vegetation index · NDVI</span><input id="ndvi-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <p class="layer-note"><a href="https://earth-search.aws.element84.com/v1/collections/sentinel-2-l2a/items/S2B_34SGH_20260911_0_L2A" target="_blank" rel="noopener noreferrer">Sentinel-2 scene ↗</a> · 11 Sep 2026 · 10 m pixels · cloud masked. Greener means stronger vegetation signal, not plant health.</p>
               <label class="layer"><span><i class="swatch swatch--greenery"></i>3D greenery</span><input id="greenery-toggle" type="checkbox" checked /><span class="switch" aria-hidden="true"></span></label>
               <p class="layer-note" id="greenery-status">Loading modeled canopy forms…</p>
+              <p class="layer-note"><a href="https://registry.opendata.aws/dataforgood-fb-forestsv2/" target="_blank" rel="noopener noreferrer">Canopy height dataset ↗</a></p>
               <label class="layer"><span><i class="swatch swatch--parks"></i>Parks &amp; groves <small>118</small></span><input id="parks-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <label class="layer"><span><i class="swatch swatch--public"></i>Mapped public spaces <small>176</small></span><input id="public-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <p class="layer-note">Athens GIS parks, playgrounds, gardens and squares. Some access and ownership are unverified; select an area for its type.</p>
+              <p class="layer-note"><a href="https://athensgis.gr/" target="_blank" rel="noopener noreferrer">Athens GIS ↗</a></p>
               <label class="layer"><span><i class="swatch swatch--dsm"></i>Surface elevation</span><input id="dsm-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <label class="layer"><span><i class="swatch swatch--contours"></i>20 m contours</span><input id="contours-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <p class="layer-note">Copernicus GLO-30 DSM · 30 m pixels · 2021 release · pale low to dark high. Includes buildings and trees. Bare-earth DTM unavailable.</p>
@@ -141,13 +147,13 @@
               <p id="place-search-note">OSM street and mapped address snapshot · 26 Oct 2026</p>
             </div>
             <div class="places" role="group" aria-label="Map locations">
-              <button class="place is-active" data-place="kifisia" type="button"><span>Κηφισιά</span><span>Kifisia <b aria-hidden="true">↗</b></span></button>
-              <button class="place" data-place="nea-erythraia" type="button"><span>Νέα Ερυθραία</span><span>Nea Erythraia <b aria-hidden="true">↗</b></span></button>
-              <button class="place" data-place="ekali" type="button"><span>Εκάλη</span><span>Ekali <b aria-hidden="true">↗</b></span></button>
+              <button class="place is-active" data-place="kifisia" type="button"><span>Kifisia</span><span>Municipal unit <b aria-hidden="true">↗</b></span></button>
+              <button class="place" data-place="nea-erythraia" type="button"><span>Nea Erythraia</span><span>Municipal unit <b aria-hidden="true">↗</b></span></button>
+              <button class="place" data-place="ekali" type="button"><span>Ekali</span><span>Municipal unit <b aria-hidden="true">↗</b></span></button>
             </div>
             <div class="story-list" role="group" aria-label="Local place stories">
               <strong>Three local stories</strong>
-              <button type="button" data-story="alsos">Άλσος Κηφισιάς <span>1901 ↗</span></button>
+              <button type="button" data-story="alsos">Kifisia Grove <span>1901 ↗</span></button>
               <button type="button" data-story="goulandris">Goulandris Museum <span>1964 ↗</span></button>
               <button type="button" data-story="kazouli">Villa Kazouli <span>19th c. ↗</span></button>
             </div>
@@ -159,14 +165,6 @@
           </section>
         </div>
 
-        <footer class="sidebar__footer">
-          <a href="https://www.openstreetmap.org/relation/2080716" target="_blank" rel="noopener noreferrer">Boundary: OpenStreetMap ↗</a>
-          <a href="https://openfreemap.org/" target="_blank" rel="noopener noreferrer">Buildings: OpenFreeMap ↗</a>
-          <a href="https://land.copernicus.eu/en/products/high-resolution-layer-forests-and-tree-cover?tab=tree_cover_density" target="_blank" rel="noopener noreferrer">Trees: Copernicus / Athens GIS ↗</a>
-          <a href="https://registry.opendata.aws/dataforgood-fb-forestsv2/" target="_blank" rel="noopener noreferrer">Canopy heights: Meta / WRI ↗</a>
-          <a href="https://athensgis.gr/" target="_blank" rel="noopener noreferrer">Other layers: Athens GIS ↗</a>
-          <span>Building heights are generalized map data, not survey measurements.</span>
-        </footer>
       </aside>
 
       <main class="map-stage">
@@ -182,7 +180,7 @@
         </article>
         <div class="map-status" id="map-status" role="status">Loading map…</div>
         <button class="reset-view" id="reset-view" type="button" aria-label="Show the whole municipality">↗ <span>Whole municipality</span></button>
-        <details class="map-legend" id="map-legend" open><summary>Map legend</summary><div id="map-legend-items"></div><div class="map-legend__basemaps"><strong>Base layers</strong><label for="basemap-select">Base map <select id="basemap-select"><option value="street">OpenFreeMap · Streets</option><option value="satellite" selected>Esri · World Imagery</option></select></label></div></details>
+        <details class="map-legend" id="map-legend" open><summary>Map legend</summary><div id="map-legend-items"></div><div class="map-legend__basemaps"><strong>Base layers</strong><label for="basemap-select">Base map <select id="basemap-select"><option value="street">OpenStreetMap</option><option value="satellite" selected>Esri</option></select></label></div></details>
         <template id="type-legend-template"><div class="type-key" aria-label="Building type colors"><span><i style="background:#b88272"></i>Residential</span><span><i style="background:#627fa2"></i>Civic &amp; health</span><span><i style="background:#c49b4a"></i>Business</span><span><i style="background:#9a77a8"></i>Worship</span><span><i style="background:#848f91"></i>Industrial</span><span><i style="background:#8ca6a0"></i>Ancillary</span></div></template>
         <template id="ndvi-legend-template"><div class="ndvi-key" aria-label="NDVI color scale from minus 0.2 to 1"><span>−0.2</span><i></i><span>1.0</span></div></template>
         <template id="density-legend-template"><div class="density-key" aria-label="Tree cover color scale from 1 to 100 percent"><span>1%</span><i></i><span>100%</span></div></template>

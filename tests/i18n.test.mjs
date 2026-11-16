@@ -23,6 +23,12 @@ test('Greek interface terms and dynamic labels', () => {
   assert.equal(translate('Base layers'), 'Υπόβαθρα');
   assert.equal(translate('Hellenic Cadastre · 2021'), 'Ελληνικό Κτηματολόγιο · 2021');
   assert.equal(translate('OASA · community feed'), 'ΟΑΣΑ · ανεπίσημη ροή');
+  assert.equal(translate('Explore a district'), 'Εξερεύνηση περιοχής');
+  assert.equal(translate('Three local stories'), 'Τρεις ιστορίες της περιοχής');
+  assert.equal(translate('Kifisia Grove'), 'Άλσος Κηφισιάς');
+  assert.equal(translate('Municipal unit'), 'Δημοτική ενότητα');
+  assert.equal(translate('Dark mode'), 'Σκοτεινή εμφάνιση');
+  assert.equal(translate('Light mode'), 'Φωτεινή εμφάνιση');
 });
 
 test('English selection preserves source text', () => {
