@@ -12,9 +12,9 @@
       <aside class="sidebar" aria-label="Map guide">
         <header class="identity">
           <div class="identity__mark" aria-hidden="true">Κ</div>
-          <div>
-            <div class="eyebrow">Attica · Greece</div>
-            <h1>Kifisia<span>Urban Observatory</span></h1>
+          <div class="identity__name">
+            <h1>Kifisia Urban Observatory</h1>
+            <p>Kifisia · Nea Erythraia · Ekali</p>
           </div>
           <button class="mobile-layers-toggle" id="mobile-layers-toggle" type="button" aria-controls="sidebar-body" aria-expanded="false">Layers</button>
           <div class="identity__controls">
@@ -163,17 +163,14 @@
             </div>
           </section>
 
-          <section class="section selection" aria-live="polite" aria-labelledby="selection-heading">
-            <div class="section__head"><span>03</span><h2 id="selection-heading">Inspect</h2></div>
-            <div id="selection-content"><p class="selection__empty">Select a mapped feature to see its details and source.</p></div>
-          </section>
+          <div id="selection-content" hidden></div>
         </div>
 
       </aside>
 
       <main class="map-stage">
         <div id="map" role="region" aria-label="Interactive 3D map of Kifisia"></div>
-        <div class="map-title" aria-hidden="true"><span>38° 04′ N · 23° 48′ E</span><strong>ΚΗΦΙΣΙΑ</strong></div>
+        <button class="selected-bus-return" id="selected-bus-return" type="button" hidden></button>
         <article class="story-card" id="story-card" aria-live="polite" hidden>
           <button class="story-card__close" id="story-close" type="button" aria-label="Close place story">×</button>
           <img id="story-photo" alt="" />

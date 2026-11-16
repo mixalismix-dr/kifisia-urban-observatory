@@ -935,6 +935,7 @@ const staticLines = new Map();
 let busPopup;
 let selectedBusRoute;
 let routeRequest = 0;
+const selectedBusReturn = document.querySelector('#selected-bus-return');
 
 async function fetchJson(url) {
   const response = await fetch(url);
@@ -954,8 +955,18 @@ function clearBusSelection() {
   busPopup = null;
   popup?.remove();
   selectedBusRoute = null;
+  selectedBusReturn.hidden = true;
   map.getSource('selected-route')?.setData(emptyFeatures());
   map.getSource('selected-route-stops')?.setData(emptyFeatures());
+}
+function parkBusPopup() {
+  const popup = busPopup;
+  busPopup = null;
+  popup?.remove();
+  if (selectedBusRoute) {
+    selectedBusReturn.textContent = `Bus ${selectedBusRoute.vehicle.line} · Stops`;
+    selectedBusReturn.hidden = false;
+  }
 }
 function drawBusRoute(selected) {
   const toLngLat = ([lat, lon]) => [lon, lat];
@@ -996,13 +1007,31 @@ function busPopupContent(vehicle, variant, lineData, liveVehicle, runData, etaSt
   list.className = 'route-popup__stops';
   for (const [index, id] of variant.stops.entries()) {
     const item = document.createElement('li');
-    item.textContent = lineData.stops[id]?.name || `Stop ${id}`;
+    const stop = lineData.stops[id];
+    const stopButton = document.createElement('button');
+    stopButton.type = 'button';
+    stopButton.className = 'route-popup__stop';
+    stopButton.textContent = stop?.name || `Stop ${id}`;
+    stopButton.addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (!stop || !selectedBusRoute) return;
+      parkBusPopup();
+      const coordinate = [stop.lon, stop.lat];
+      map.flyTo({ center: coordinate, zoom: Math.max(map.getZoom(), 15.5), duration: 800 });
+      buildingPopup?.remove();
+      const eta = progress.minutes[index];
+      const note = eta !== null ? `${eta} min estimated arrival` : 'Mapped stop on this route';
+      buildingPopup = new maplibregl.Popup({ className: 'building-popup route-stop-popup', maxWidth: '220px', offset: 12 })
+        .setLngLat(coordinate).setDOMContent(selectionDetails(stop.name, `Bus ${vehicle.line}`, note)).addTo(map);
+      showSelection(stop.name, `Bus ${vehicle.line}`, note);
+    });
     if (progress.minutes[index] !== null) {
       const eta = document.createElement('span');
       eta.className = 'route-popup__eta';
-      eta.textContent = `~${progress.minutes[index]} min`;
-      item.append(eta);
+      eta.textContent = `${progress.minutes[index]} min`;
+      stopButton.append(eta);
     }
+    item.append(stopButton);
     if (nextIndex >= 0 && index < nextIndex) item.className = 'route-popup__passed';
     if (index === nextIndex) item.className = 'route-popup__current';
     list.append(item);
@@ -1019,7 +1048,11 @@ function busPopupContent(vehicle, variant, lineData, liveVehicle, runData, etaSt
   button.type = 'button';
   button.className = 'route-popup__view';
   button.textContent = 'View full route ↗';
-  button.addEventListener('click', (event) => { event.stopPropagation(); fitRoute(variant.shape.map(([lat, lon]) => [lon, lat])); });
+  button.addEventListener('click', (event) => {
+    event.stopPropagation();
+    parkBusPopup();
+    fitRoute(variant.shape.map(([lat, lon]) => [lon, lat]));
+  });
   content.append(button);
   addText('p', 'selection__note', hasEta
     ? 'Arrival times are estimates from the community OASA feed. The route and stops come from GTFS; detours may differ.'
@@ -1036,11 +1069,23 @@ async function loadBusRun(selected) {
     }
     if (current?.run) runData = await fetchJson(`https://transit.haroldpoi.dev/v2/runs/${encodeURIComponent(current.run)}`);
   } catch { /* Route and stops remain available if the live estimate service fails. */ }
-  if (selectedBusRoute !== selected || !busPopup) return;
+  if (selectedBusRoute !== selected) return;
   selected.runData = runData;
   selected.etaState = 'done';
-  busPopup.setDOMContent(busPopupContent(selected.vehicle, selected.variant, selected.lineData, selected.liveVehicle, runData, selected.etaState));
+  busPopup?.setDOMContent(busPopupContent(selected.vehicle, selected.variant, selected.lineData, selected.liveVehicle, runData, selected.etaState));
 }
+selectedBusReturn.addEventListener('click', () => {
+  if (!selectedBusRoute) return;
+  buildingPopup?.remove();
+  const { vehicle, variant, lineData, liveVehicle, runData, etaState } = selectedBusRoute;
+  const coordinate = [vehicle.lon, vehicle.lat];
+  map.flyTo({ center: coordinate, zoom: Math.max(map.getZoom(), 14), duration: 700 });
+  busPopup = new maplibregl.Popup({ className: 'route-popup', closeOnClick: false, maxWidth: '340px', offset: 16 })
+    .setLngLat(coordinate).setDOMContent(busPopupContent(vehicle, variant, lineData, liveVehicle, runData, etaState)).addTo(map);
+  const popup = busPopup;
+  popup.on('close', () => { if (busPopup === popup) parkBusPopup(); });
+  selectedBusReturn.hidden = true;
+});
 async function selectBus(event, properties) {
   const vehicle = nearbyBuses.get(String(properties.id));
   if (!vehicle) return;
@@ -1448,18 +1493,17 @@ async function refreshBuses() {
       const currentSelection = selectedBusRoute;
       fetchJson(`https://transit.haroldpoi.dev/v1/lines/${encodeURIComponent(selected.line)}`)
         .then((data) => {
-          if (selectedBusRoute !== currentSelection || !busPopup) return;
+          if (selectedBusRoute !== currentSelection) return;
           const liveVehicle = data.vehicles?.find((item) => String(item.id) === String(selected.id));
           currentSelection.liveVehicle = liveVehicle;
-          busPopup.setDOMContent(busPopupContent(selected, currentSelection.variant, currentSelection.lineData, liveVehicle, currentSelection.runData, currentSelection.etaState));
+          busPopup?.setDOMContent(busPopupContent(selected, currentSelection.variant, currentSelection.lineData, liveVehicle, currentSelection.runData, currentSelection.etaState));
           void loadBusRun(currentSelection);
         }).catch(() => {});
-    } else if (selectedBusRoute) clearBusSelection();
+    }
     const time = new Date(feed.updated_at * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
     busFeedStatus.textContent = `${features.length} recent positions · feed updated ${time} · community OASA source`;
   } catch (error) {
     nearbyBuses = new Map();
-    clearBusSelection();
     map.getSource('live-buses').setData({ type: 'FeatureCollection', features: [] });
     busModelLayer?.setVehicles([]);
     busFeedStatus.textContent = `Live buses unavailable: ${error.message}`;
