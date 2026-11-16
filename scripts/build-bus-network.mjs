@@ -4,11 +4,11 @@ const stops = JSON.parse(readFileSync('public/data/kifisia-bus-stops.geojson', '
 const lines = [...new Set(stops.flatMap(({ properties }) => (properties.route_ref || '').split(';').map((s) => s.trim()).filter(Boolean)))].sort();
 const bounds = [23.767, 38.059, 23.886, 38.124];
 const inside = ([lon, lat]) => lon >= bounds[0] && lon <= bounds[2] && lat >= bounds[1] && lat <= bounds[3];
-const index = await fetch('https://angelospk.github.io/athens-transit-rt/static/v1/lines.json').then((r) => r.json());
+const index = await fetch('https://angelospk.github.io/staseis-rt/static/v1/lines.json').then((r) => r.json());
 const features = [];
 const missing = [];
 for (const line of lines) {
-  const response = await fetch(`https://angelospk.github.io/athens-transit-rt/static/v1/lines/${encodeURIComponent(line)}.json`);
+  const response = await fetch(`https://angelospk.github.io/staseis-rt/static/v1/lines/${encodeURIComponent(line)}.json`);
   if (!response.ok) { missing.push(line); continue; }
   const data = await response.json();
   const seen = new Set();

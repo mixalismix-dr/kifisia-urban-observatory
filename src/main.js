@@ -9,6 +9,7 @@ import { sportsCategories, civicCategories, categoryFilter } from './category-fi
 import { createBasemapLabelStyler } from './basemap-labels.js';
 import { initTour } from './tour.js';
 import { initI18n } from './i18n.js';
+import { busStopProgress } from './bus-stop-progress.js';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';
@@ -103,7 +104,6 @@ searchInput.addEventListener('keydown', (event) => {
   if (event.key === 'Enter') { event.preventDefault(); searchResults.querySelector('button')?.click(); }
   if (event.key === 'Escape') { searchResults.replaceChildren(); searchInput.blur(); }
 });
-const localBounds = [[23.71, 38.02], [23.94, 38.16]];
 
 const status = document.querySelector('#map-status');
 const selection = document.querySelector('#selection-content');
@@ -308,7 +308,6 @@ const map = new maplibregl.Map({
   zoom: 15.1,
   pitch: 52,
   bearing: -22,
-  maxBounds: localBounds,
   attributionControl: false,
   canvasContextAttributes: { antialias: !matchMedia('(pointer: coarse)').matches },
 });
@@ -936,7 +935,6 @@ const staticLines = new Map();
 let busPopup;
 let selectedBusRoute;
 let routeRequest = 0;
-let routeBoundsExpanded = false;
 
 async function fetchJson(url) {
   const response = await fetch(url);
@@ -945,7 +943,7 @@ async function fetchJson(url) {
 }
 function staticLine(line) {
   if (!staticLines.has(line)) {
-    const url = `https://angelospk.github.io/athens-transit-rt/static/v1/lines/${encodeURIComponent(line)}.json`;
+    const url = `https://angelospk.github.io/staseis-rt/static/v1/lines/${encodeURIComponent(line)}.json`;
     staticLines.set(line, fetchJson(url).catch((error) => { staticLines.delete(line); throw error; }));
   }
   return staticLines.get(line);
@@ -958,7 +956,6 @@ function clearBusSelection() {
   selectedBusRoute = null;
   map.getSource('selected-route')?.setData(emptyFeatures());
   map.getSource('selected-route-stops')?.setData(emptyFeatures());
-  if (routeBoundsExpanded) { map.setMaxBounds(localBounds); routeBoundsExpanded = false; }
 }
 function drawBusRoute(selected) {
   const toLngLat = ([lat, lon]) => [lon, lat];
@@ -976,11 +973,9 @@ function drawBusRoute(selected) {
 function fitRoute(coordinates) {
   const bounds = new maplibregl.LngLatBounds();
   for (const point of coordinates) bounds.extend(point);
-  map.setMaxBounds(null);
-  routeBoundsExpanded = true;
   map.fitBounds(bounds, { padding: 65, maxZoom: 15, pitch: 40, duration: 1000 });
 }
-function busPopupContent(vehicle, variant, lineData, liveVehicle) {
+function busPopupContent(vehicle, variant, lineData, liveVehicle, runData) {
   const content = document.createElement('div');
   const addText = (tag, className, value) => {
     const element = document.createElement(tag);
@@ -993,27 +988,51 @@ function busPopupContent(vehicle, variant, lineData, liveVehicle) {
   addText('p', 'selection__detail', variant.headsign);
   if (liveVehicle?.trip_label) addText('p', 'route-popup__trip', liveVehicle.trip_label);
   const nextId = liveVehicle?.next_stop_id;
-  const nextIndex = variant.stops.indexOf(nextId);
-  addText('p', 'route-popup__next', nextIndex >= 0 ? `Next stop: ${lineData.stops[nextId]?.name || nextId}` : 'Next stop not confirmed by the live feed');
+  const progress = busStopProgress(variant, runData, vehicle.id, nextId);
+  const nextIndex = progress.nextIndex;
+  const upcomingId = variant.stops[nextIndex];
+  addText('p', 'route-popup__next', nextIndex >= 0 ? `Next stop: ${lineData.stops[upcomingId]?.name || upcomingId}` : 'Next stop not confirmed by the live feed');
   const list = document.createElement('ol');
   list.className = 'route-popup__stops';
   for (const [index, id] of variant.stops.entries()) {
     const item = document.createElement('li');
     item.textContent = lineData.stops[id]?.name || `Stop ${id}`;
+    if (progress.minutes[index] !== null) {
+      const eta = document.createElement('span');
+      eta.className = 'route-popup__eta';
+      eta.textContent = `~${progress.minutes[index]} min`;
+      item.append(eta);
+    }
     if (nextIndex >= 0 && index < nextIndex) item.className = 'route-popup__passed';
     if (index === nextIndex) item.className = 'route-popup__current';
     list.append(item);
   }
   content.append(list);
-  if (nextIndex >= 0) list.scrollTop = Math.max(0, nextIndex * 26 - 35);
+  if (nextIndex >= 0) requestAnimationFrame(() => {
+    const next = list.children[nextIndex];
+    if (next?.isConnected) list.scrollTop += next.getBoundingClientRect().top - list.getBoundingClientRect().top - list.clientHeight / 2;
+  });
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'route-popup__view';
   button.textContent = 'View full route ↗';
   button.addEventListener('click', (event) => { event.stopPropagation(); fitRoute(variant.shape.map(([lat, lon]) => [lon, lat])); });
   content.append(button);
-  addText('p', 'selection__note', 'Route and stops: OASA GTFS snapshot. Bright blue shows the live feed’s path ahead when available. Detours may differ.');
+  addText('p', 'selection__note', progress.minutes.some((minutes) => minutes !== null)
+    ? 'Arrival times are estimates from the community OASA feed. The route and stops come from GTFS; detours may differ.'
+    : 'Route and stops: OASA GTFS snapshot. Arrival estimates are unavailable. Detours may differ.');
   return content;
+}
+async function loadBusRun(selected) {
+  try {
+    const vehicles = await fetchJson(`https://transit.haroldpoi.dev/v2/lines/${encodeURIComponent(`oasa:${selected.vehicle.line}`)}/vehicles`);
+    const runId = vehicles.vehicles?.find((item) => item.id === `oasa:${selected.id}`)?.run;
+    if (!runId) return;
+    const runData = await fetchJson(`https://transit.haroldpoi.dev/v2/runs/${encodeURIComponent(runId)}`);
+    if (selectedBusRoute !== selected || !busPopup) return;
+    selected.runData = runData;
+    busPopup.setDOMContent(busPopupContent(selected.vehicle, selected.variant, selected.lineData, selected.liveVehicle, runData));
+  } catch { /* Keep the route visible when arrival estimates are unavailable. */ }
 }
 async function selectBus(event, properties) {
   const vehicle = nearbyBuses.get(String(properties.id));
@@ -1043,10 +1062,11 @@ async function selectBus(event, properties) {
     popup.setDOMContent(selectionDetails(`Bus ${vehicle.line}`, 'This vehicle’s route variant is unavailable.', 'Live position remains available.'));
     return;
   }
-  selectedBusRoute = { id: String(vehicle.id), vehicle, variant, lineData };
+  selectedBusRoute = { id: String(vehicle.id), vehicle, variant, lineData, liveVehicle };
   drawBusRoute(selectedBusRoute);
   popup.setDOMContent(busPopupContent(vehicle, variant, lineData, liveVehicle));
   showSelection(`Bus ${vehicle.line}`, variant.headsign, `${variant.stops.length} ordered stops · community OASA route snapshot`);
+  void loadBusRun(selectedBusRoute);
 }
 
 let railPopup;
@@ -1423,7 +1443,9 @@ async function refreshBuses() {
         .then((data) => {
           if (selectedBusRoute !== currentSelection || !busPopup) return;
           const liveVehicle = data.vehicles?.find((item) => String(item.id) === String(selected.id));
-          busPopup.setDOMContent(busPopupContent(selected, currentSelection.variant, currentSelection.lineData, liveVehicle));
+          currentSelection.liveVehicle = liveVehicle;
+          busPopup.setDOMContent(busPopupContent(selected, currentSelection.variant, currentSelection.lineData, liveVehicle, currentSelection.runData));
+          void loadBusRun(currentSelection);
         }).catch(() => {});
     } else if (selectedBusRoute) clearBusSelection();
     const time = new Date(feed.updated_at * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
