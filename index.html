@@ -20,6 +20,7 @@
           <div class="identity__controls">
             <label class="language-choice" for="language-select"><span>Γλώσσα / Language</span><select id="language-select" aria-label="Γλώσσα / Language"><option value="el">Ελληνικά</option><option value="en">English</option></select></label>
             <label class="theme-switch"><span>Light</span><input id="theme-toggle" type="checkbox" role="switch" aria-label="Dark mode" /><span class="theme-switch__track" aria-hidden="true"></span><span>Dark</span></label>
+            <button class="tour-launch" id="tour-launch" type="button" aria-label="Open map tour">? <span>Tour</span></button>
           </div>
         </header>
 
@@ -57,7 +58,7 @@
               <p class="layer-note" id="parcels-status" role="status"></p>
               <label class="layer"><span><i class="swatch swatch--landuse"></i>Published planning uses <small>296</small></span><input id="planning-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <p class="layer-note">TEE Digital Map · ΓΠΣ and ΕΡΣ polygons. Select an area for its use, decision date and ΦΕΚ. <a href="https://sdigmap.tee.gov.gr/sdmportal/el/gia-polites" target="_blank" rel="noopener noreferrer">Source ↗</a> Historical decisions may overlap; check the cited ΦΕΚ for current status.</p>
-              <label class="layer"><span><i class="swatch swatch--public"></i>Designated civic spaces <small>557</small></span><input id="designated-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+              <label class="layer"><span><i class="swatch swatch--designated"></i>Designated civic spaces <small>557</small></span><input id="designated-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <p class="layer-note">TEE Digital Map · official planning designations, including squares, schools and green spaces. Select a polygon for its ΦΕΚ. <a href="https://sdigmap.tee.gov.gr/mapping/rest/services/UDM/UDM_SERVICE_POLEODOMIKI_PLIROFORIA/MapServer/22" target="_blank" rel="noopener noreferrer">Source ↗</a></p>
               <label class="layer"><span><i class="swatch swatch--forest"></i>Ratified forest map · 2021 <small>210</small></span><input id="forest-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <p class="layer-note">TEE / Hellenic Cadastre · partly ratified Attica map, 2 Jun 2021. Select an area for its forest-map code. For current legal status, use the <a href="https://www.ktimatologio.gr/e-services/15" target="_blank" rel="noopener noreferrer">Cadastre viewer ↗</a>.</p>
@@ -137,7 +138,7 @@
               <p class="layer-note"><a href="https://kifissia.gr/paidikes-chares-choroi-athlisis/" target="_blank" rel="noopener noreferrer">Municipal facilities source ↗</a></p>
               <label class="layer"><span><i class="swatch swatch--civic"></i>Schools &amp; services <small>80</small></span><input id="civic-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <label class="basemap-choice category-filter" id="civic-filter-wrap" for="civic-filter" hidden>Type <select id="civic-filter"><option value="all">All schools &amp; services</option><option value="School">Schools</option><option value="Hospital">Hospitals</option><option value="public">Police &amp; municipal office</option><option value="culture">Cinemas &amp; theatre</option></select></label>
-              <p class="layer-note">Athens GIS / OSM snapshot · 25 Oct 2026. Select a feature for details.</p>
+              <p class="layer-note">Athens GIS / OSM · 25 Oct 2026.</p>
             </details>
           </section>
 
@@ -147,7 +148,7 @@
               <label for="place-search-input">Find a place or street</label>
               <input id="place-search-input" type="search" autocomplete="off" placeholder="Street, address, park…" aria-controls="place-search-results" />
               <ul id="place-search-results" aria-live="polite"></ul>
-              <p id="place-search-note">OSM street and mapped address snapshot · 26 Oct 2026</p>
+              <p id="place-search-note" role="status" hidden></p>
             </div>
             <div class="places" role="group" aria-label="Map locations">
               <button class="place is-active" data-place="kifisia" type="button"><span>Kifisia</span><span>Municipal unit <b aria-hidden="true">↗</b></span></button>
@@ -198,6 +199,13 @@
       <div class="tps-dialog__image"><img id="tps-image" alt="Official alternative spatial planning scenario for the Kifisia Municipal Unit" /></div>
       <a href="https://polsxedia.ypen.gov.gr/tps_details/%CE%925_129" target="_blank" rel="noopener noreferrer">View the official study and explanation ↗</a>
     </dialog>
+    <div class="tour-spotlight" id="tour-spotlight" aria-hidden="true" hidden></div>
+    <section class="tour-card" id="tour-card" role="dialog" aria-modal="false" aria-labelledby="tour-title" aria-describedby="tour-copy" hidden>
+      <div class="tour-card__top"><span id="tour-progress">01 / 06</span><button id="tour-skip" type="button">Skip tour</button></div>
+      <div class="tour-card__progress" aria-hidden="true"><i id="tour-progress-bar"></i></div>
+      <div aria-live="polite"><h2 id="tour-title" tabindex="-1"></h2><p id="tour-copy"></p></div>
+      <div class="tour-card__actions"><button id="tour-never" type="button">Never show again</button><span><button id="tour-back" type="button">Back</button><button id="tour-next" type="button">Next</button></span></div>
+    </section>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

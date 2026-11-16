@@ -7,6 +7,7 @@ import { createTrafficLayer } from './traffic-layer.js';
 import { setupSunPreview } from './sun-preview.js';
 import { sportsCategories, civicCategories, categoryFilter } from './category-filters.js';
 import { createBasemapLabelStyler } from './basemap-labels.js';
+import { initTour } from './tour.js';
 import { initI18n } from './i18n.js';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -19,6 +20,7 @@ const legendLabels = Object.fromEntries([...document.querySelectorAll('.layer in
   return [input.id, label.textContent.trim()];
 }));
 initI18n();
+initTour();
 const themeToggle = document.querySelector('#theme-toggle');
 function setTheme(theme) {
   document.documentElement.dataset.theme = theme;
@@ -65,7 +67,7 @@ let searchPopup;
 fetch(`${import.meta.env.BASE_URL}data/kifisia-search.json`)
   .then((response) => { if (!response.ok) throw new Error(`HTTP ${response.status}`); return response.json(); })
   .then((items) => { searchItems = items.map((item) => ({ ...item, key: searchKey(item.name) })); searchInput.dispatchEvent(new Event('input')); })
-  .catch(() => { searchNote.textContent = 'Place search unavailable'; });
+  .catch(() => { searchNote.textContent = 'Place search unavailable'; searchNote.hidden = false; });
 searchInput.addEventListener('input', () => {
   searchResults.replaceChildren();
   const query = searchKey(searchInput.value.trim());
@@ -1201,7 +1203,7 @@ document.querySelectorAll('[data-story]').forEach((button) => button.addEventLis
   licenseLink.target = '_blank';
   licenseLink.rel = 'noopener noreferrer';
   licenseLink.textContent = 'CC BY-SA 4.0';
-  credit.replaceChildren('Photo ', photoLink, ` · ${story.photoYear} · `, licenseLink, ' · resized for the map');
+  credit.replaceChildren('Photo ', photoLink, ` · ${story.photoYear} · `, licenseLink);
   storyCard.hidden = false;
   storyMarker?.remove();
   storyMarker = new maplibregl.Marker({ color: '#9b5471' }).setLngLat(story.point).addTo(map);

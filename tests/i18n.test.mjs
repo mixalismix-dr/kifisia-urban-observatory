@@ -31,6 +31,8 @@ test('Greek interface terms and dynamic labels', () => {
   assert.equal(translate('Municipal unit'), 'Δημοτική ενότητα');
   assert.equal(translate('Dark mode'), 'Σκοτεινή εμφάνιση');
   assert.equal(translate('Light mode'), 'Φωτεινή εμφάνιση');
+  assert.equal(translate('Choose map layers'), 'Επιλέξτε επίπεδα χάρτη');
+  assert.equal(translate('Never show again'), 'Να μην εμφανιστεί ξανά');
 });
 
 test('English selection preserves source text', () => {
