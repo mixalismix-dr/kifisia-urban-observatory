@@ -12,6 +12,7 @@ const el = {
   'Explore buildings, landscape, water, places and transport across Kifisia. Each layer names its source and date.': 'Εξερευνήστε τα κτίρια, το τοπίο, τα υδάτινα στοιχεία, τους χώρους και τις μετακινήσεις στην Κηφισιά. Κάθε επίπεδο αναφέρει την πηγή και τη χρονολογία των δεδομένων του.',
   'Map layers': 'Επίπεδα χάρτη',
   'Layers': 'Επίπεδα',
+  'Appearance': 'Εμφάνιση',
   'Dark mode': 'Σκοτεινή εμφάνιση',
   'Light mode': 'Φωτεινή εμφάνιση',
   'Close': 'Κλείσιμο',

@@ -12,6 +12,7 @@ test('Greek interface terms and dynamic labels', () => {
   assert.equal(translate('  Photo '), '  Φωτογραφία ');
   assert.equal(translate('3 active'), '3 ενεργά');
   assert.equal(translate('Layers'), 'Επίπεδα');
+  assert.equal(translate('Appearance'), 'Εμφάνιση');
   assert.equal(translate('Close'), 'Κλείσιμο');
   assert.equal(translate('Scenario 3: Kifissia centre'), 'Σενάριο 3: Κέντρο Κηφισιάς');
   assert.equal(translate('Open or unused land'), 'Ανοιχτές εκτάσεις ή γη χωρίς καταγεγραμμένη χρήση');
