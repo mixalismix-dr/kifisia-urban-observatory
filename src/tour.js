@@ -14,7 +14,7 @@ const steps = [
   { target: '#map', title: 'Explore the 3D map', copy: 'Drag to move, scroll or pinch to zoom, and select a mapped feature for details.' },
   { target: '#map-legend', title: 'Read the active legend', copy: 'The legend follows the layers you turn on. It shows their symbols, transparency and data sources.', legend: true },
   { target: '.map-legend__basemaps', title: 'Choose a base map', copy: 'Switch between Esri imagery and the OpenStreetMap street view beneath your selected layers.', legend: true },
-  { target: '.identity__controls', title: 'Set your view', copy: 'Choose Greek or English and a light or dark interface. Open this tour again with the Tour button.' },
+  { target: '.identity__controls', title: 'Set your view', copy: 'Choose Greek or English and a light or dark interface. Open this tutorial again with the Tutorial button.' },
 ];
 
 export function initTour() {
