@@ -234,6 +234,21 @@ window.visualViewport?.addEventListener('resize', () => map.resize());
 map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-right');
 map.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: 'metric' }), 'bottom-right');
 map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
+const mapCredits = document.querySelector('#map .maplibregl-ctrl-bottom-right');
+const mapStage = document.querySelector('.map-stage');
+const clearCredits = () => {
+  const bottom = mapStage.getBoundingClientRect().bottom;
+  const height = Math.max(0, ...[...mapCredits.children].map((control) => bottom - control.getBoundingClientRect().top));
+  mapStage.style.setProperty('--map-credits-height', `${Math.ceil(height)}px`);
+};
+if (window.ResizeObserver) {
+  const observer = new ResizeObserver(clearCredits);
+  observer.observe(mapStage);
+  for (const control of mapCredits.children) observer.observe(control);
+}
+new MutationObserver(clearCredits).observe(mapCredits.querySelector('.maplibregl-ctrl-attrib'), { attributes: true, attributeFilter: ['class'] });
+window.addEventListener('resize', clearCredits);
+clearCredits();
 if (matchMedia('(pointer: coarse)').matches) {
   const attribution = document.querySelector('.maplibregl-ctrl-attrib');
   let attributionOpened = false;
