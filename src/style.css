@@ -223,6 +223,9 @@ h2 { font-size: 13px; letter-spacing: .01em; margin: 0; font-weight: 700; }
 [data-theme="dark"] .identity { background: #14231b; }
 [data-theme="dark"] .language-choice select, [data-theme="dark"] #theme-toggle { background: #263c2e; border-color: #617d68; color: #f2f4ed; }
 [data-theme="dark"] .edition, [data-theme="dark"] .section, [data-theme="dark"] .layer-group, [data-theme="dark"] .story-list { border-color: #455548; }
+[data-theme="dark"] .layer-group summary { color: #e5ece4; }
+[data-theme="dark"] .layer-group__count, [data-theme="dark"] .layer-group summary::before { color: #b5c9b7; }
+[data-theme="dark"] .layer-group summary:focus-visible, [data-theme="dark"] .layer input:focus-visible + .switch, [data-theme="dark"] .place-search input:focus-visible { outline-color: #b5dbbd; }
 [data-theme="dark"] .description, [data-theme="dark"] .story-list strong, [data-theme="dark"] .sun-controls label, [data-theme="dark"] .tps-controls p { color: #b5c6b6; }
 [data-theme="dark"] .edition, [data-theme="dark"] .section__head span, [data-theme="dark"] .layer small, [data-theme="dark"] .layer-note, [data-theme="dark"] .place-search p, [data-theme="dark"] .story-list button span, [data-theme="dark"] .selection__empty, [data-theme="dark"] .selection__note, [data-theme="dark"] .ndvi-key, [data-theme="dark"] .density-key { color: #a8bbaa; }
 [data-theme="dark"] .places, [data-theme="dark"] .place, [data-theme="dark"] .story-list button, [data-theme="dark"] .place-search li button { border-color: #455548; }
