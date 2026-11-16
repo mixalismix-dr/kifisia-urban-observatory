@@ -220,6 +220,7 @@ const legendGroups = [
   ['flood-toggle', '100-year flood zone', [['Modeled 100-year flood extent', '#277fa6']]],
   ['landuse-toggle', 'Observed land cover', [['Forest and urban green', '#6e9e70'], ['Grassland and pasture', '#a4b77f'], ['Sports and leisure', '#8eb5aa'], ['Industry and infrastructure', '#b9a8a0'], ['Open or unused land', '#c8c4a6'], ['Other mapped cover', '#e5d0b4']]],
   ['sports-toggle', 'Sports sites', sportsCategories.map(([, label, color]) => [label, color])],
+  ['public-toggle', 'Mapped public spaces', [['Park · also in Parks & groves', '#4d9868'], ['Playground', '#dca953'], ['Garden or square', '#6b94a8']]],
   ['civic-toggle', 'Schools & services', civicCategories.map(([, label, color]) => [label, color, 'point'])],
 ];
 function updateMapLegend(event) {
@@ -378,7 +379,7 @@ map.on('load', async () => {
     minzoom: 13,
     layout: { visibility: layerVisibility('buildings-toggle') },
     paint: {
-      'fill-extrusion-color': '#d0a681',
+      'fill-extrusion-color': '#c8c4b6',
       'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 0],
       'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
       'fill-extrusion-opacity': 0.82,
@@ -400,7 +401,7 @@ map.on('load', async () => {
     paint: {
       'fill-extrusion-color': ['match', ['get', 'category'],
         'Residential', '#b88272', 'Civic & health', '#627fa2', 'Business', '#c49b4a',
-        'Worship', '#9a77a8', 'Industrial', '#848f91', 'Ancillary', '#8ca6a0', '#d0a681'],
+        'Worship', '#9a77a8', 'Industrial', '#848f91', 'Ancillary', '#8ca6a0', '#c8c4b6'],
       'fill-extrusion-height': ['get', 'height_m'], 'fill-extrusion-opacity': 0.92,
     },
   }, labelLayer);
@@ -485,7 +486,7 @@ map.on('load', async () => {
   for (const [name, toggle, type, paint] of [
     ['sports', 'sports-toggle', 'fill', { 'fill-color': ['case', ['==', ['get', 'sport'], null], '#8d928a', ['match', ['get', 'sport'], 'tennis', '#b86a53', 'basketball', '#c5963f', 'soccer', '#56856b', '#8f7187']], 'fill-opacity': 0.72, 'fill-outline-color': '#713e38' }],
     ['parks', 'parks-toggle', 'fill', { 'fill-color': '#4d9868', 'fill-opacity': 0.46, 'fill-outline-color': '#25704d' }],
-    ['public-spaces', 'public-toggle', 'fill', { 'fill-color': ['match', ['get', 'category'], 'Park', '#4d9868', 'Playground', '#dca953', '#86a97e'], 'fill-opacity': 0.42, 'fill-outline-color': '#37654b' }],
+    ['public-spaces', 'public-toggle', 'fill', { 'fill-color': ['match', ['get', 'category'], 'Park', '#4d9868', 'Playground', '#dca953', '#6b94a8'], 'fill-opacity': 0.42, 'fill-outline-color': '#37654b' }],
     ['playgrounds', 'playgrounds-toggle', 'fill', { 'fill-color': '#dca953', 'fill-opacity': 0.75, 'fill-outline-color': '#a66a21' }],
     ['arch-sites', 'heritage-toggle', 'fill', { 'fill-color': '#9b6b91', 'fill-opacity': 0.73, 'fill-outline-color': '#6f4267' }],
     ['rivers', 'water-toggle', 'line', { 'line-color': '#348fbb', 'line-width': 3, 'line-opacity': 0.9 }],
@@ -1271,6 +1272,9 @@ for (const [input, layers] of [
 ]) {
   document.querySelector(`#${input}`).addEventListener('change', (event) => {
     for (const layer of layers) if (map.getLayer(layer)) map.setLayoutProperty(layer, 'visibility', event.target.checked ? 'visible' : 'none');
+    if ((input === 'parks-toggle' || input === 'public-toggle') && map.getLayer('public-spaces')) {
+      map.setFilter('public-spaces', document.querySelector('#parks-toggle').checked ? ['!=', ['get', 'category'], 'Park'] : null);
+    }
   });
 }
 function updateCategoryFilter(layer, selectId) {

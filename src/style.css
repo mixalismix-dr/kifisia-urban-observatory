@@ -66,7 +66,7 @@ h2 { font-size: 13px; letter-spacing: .01em; margin: 0; font-weight: 700; }
 .category-filter select { max-width: 185px; }
 .layer > span:first-child { display: flex; align-items: center; gap: 9px; }
 .swatch { width: 11px; height: 11px; display: inline-block; }
-.swatch--built { background: #d0a681; }
+.swatch--built { background: #c8c4b6; }
 .swatch--sun { background: #d5a148; border-radius: 50%; box-shadow: 3px 3px #526271; }
 .sun-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin: 0 0 8px 20px; padding: 8px 0; }
 .sun-controls[hidden] { display: none; }
@@ -102,7 +102,7 @@ h2 { font-size: 13px; letter-spacing: .01em; margin: 0; font-weight: 700; }
 .tps-controls p { margin: 7px 0 0; color: #59675c; font-size: 11px; line-height: 1.4; }
 .tps-controls .tps-summary { color: #473645; font-weight: 600; }
 .swatch--parks { background: #4d9868; }
-.swatch--public { background: #86a97e; border: 1px solid #37654b; }
+.swatch--public { background: linear-gradient(90deg, #4d9868 33%, #dca953 33% 66%, #6b94a8 66%); border: 1px solid #37654b; }
 .swatch--designated { background: #6c9ca5; border: 1px solid #285977; }
 .swatch--parcels { border: 1px solid #765d8d; }
 .swatch--water { background: #348fbb; height: 3px; }

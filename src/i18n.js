@@ -97,6 +97,7 @@ const el = {
   'Tree cover color scale from 1 to 100 percent': 'Χρωματική κλίμακα δενδροκάλυψης από 1 έως 100 τοις εκατό',
   'Parks & groves': 'Πάρκα και άλση',
   'Mapped public spaces': 'Χαρτογραφημένοι κοινόχρηστοι χώροι',
+  'Park · also in Parks & groves': 'Πάρκο · εμφανίζεται και στα Πάρκα και άλση',
   'Athens GIS parks, playgrounds, gardens and squares. Some access and ownership are unverified; select an area for its type.': 'Πάρκα, παιδικές χαρές, κήποι και πλατείες από το Athens GIS. Η πρόσβαση και η ιδιοκτησία δεν έχουν επαληθευτεί παντού· επιλέξτε περιοχή για να δείτε την κατηγορία της.',
   'Surface elevation': 'Υψόμετρο επιφάνειας',
   '20 m contours': 'Ισοϋψείς καμπύλες ανά 20 μ.',
