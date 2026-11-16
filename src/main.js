@@ -96,6 +96,30 @@ let trainModelLayer;
 let trafficModelLayer;
 let railNetworkVisible = false;
 const kifissiaStation = [23.808219792, 38.073395087];
+const tpsStudyUrl = 'https://polsxedia.ypen.gov.gr/media/media/%CE%9110_PXg4CX7.pdf';
+// These are named-area pointers from section A10, not digitized proposal boundaries.
+const tpsHighlights = [
+  { point: kifissiaStation, name: 'Kifissia station',
+    desc1: 'Existing transport plans continue; the trends scenario adds no new rail intervention.',
+    desc2: 'The study proposes undergrounding the Kifissia terminal and extending Line 1 toward Nea Erythraia.',
+    desc3: 'The transport proposals of scenario 2 are retained.' },
+  { point: [23.787, 38.085], name: 'Kalyftaki industrial area',
+    desc1: 'The part of the industrial park without an approved street plan remains outside the plan.',
+    desc2: 'The unplanned part is proposed for urban planning as a production area; a portion near the oncology hospital is proposed for residential unit 14.',
+    desc3: 'The production-area proposals of scenario 2 are retained.' },
+  { point: [23.813, 38.074], name: 'Kifissia centre',
+    desc1: 'Existing planning rules continue; identified land-use conflicts remain unresolved.',
+    desc2: 'The study proposes updated land-use categories and restricted general-residential uses on selected arterial frontages.',
+    desc3: 'Some central functions become local centres; the proposed average floor-area ratio in units 3, 6 and 7 rises from 0.5 to 0.6.' },
+  { point: [23.832, 38.084], name: 'Politeia and Penteli edge',
+    desc1: 'Existing planning rules continue in this area.',
+    desc2: 'Planning unit 5 is proposed to include block 62 while retaining its average floor-area ratio of 0.5.',
+    desc3: 'The proposed average floor-area ratio of unit 5 falls from 0.5 to 0.4 next to the protected Penteli area.' },
+  { point: [23.793, 38.096], name: 'Adames and Kifisos edge',
+    desc1: 'Existing planning rules continue in this area.',
+    desc2: 'Planning unit 13 is proposed to include blocks 1008, 1010, 1011, 1062, 1063 and 1064.',
+    desc3: 'The unit 13 proposal is retained; its average floor-area ratio falls from 0.5 to 0.4 near the Kifisos protection area.' },
+];
 const emptyFeatures = () => ({ type: 'FeatureCollection', features: [] });
 const layerVisibility = (toggle) => document.querySelector(`#${toggle}`).checked ? 'visible' : 'none';
 const layerPanel = document.querySelector('#layers-heading').closest('section');
@@ -107,6 +131,43 @@ function updateLayerCounts() {
 }
 layerPanel.addEventListener('change', updateLayerCounts);
 updateLayerCounts();
+const legend = document.querySelector('#map-legend');
+const legendGroups = [
+  ['boundary-toggle', 'Municipal boundary', [['Municipal boundary', '#254d3d', 'line']]],
+  ['tps-toggle', 'Local plan proposals', [['Study area · Kifisia Municipal Unit', '#a14b73', 'line'], ['Indicative proposal location · select for details', '#a14b73', 'point']]],
+  ['planning-toggle', 'Published planning uses', [['Green space', '#59966d'], ['Residential', '#e7d3aa'], ['Mixed residential', '#d8af83'], ['Centre', '#c17d76'], ['Civic', '#6888a0'], ['Production', '#987c91'], ['Other planning use', '#aba99b']]],
+  ['designated-toggle', 'Designated civic spaces', [['Public or civic space', '#6c9ca5']]],
+  ['forest-toggle', 'Partly ratified forest map', [['ΔΔ · forest in both periods', '#27774c'], ['ΔΑ · forest in the past', '#bd7656'], ['ΑΔ · forest recently', '#83a65a'], ['ΑΑ · other cover in both periods', '#d9c59e'], ['ΠΑ · final non-forest designation', '#b8aaa1']]],
+  ['flood-toggle', '100-year flood zone', [['Modeled 100-year flood extent', '#277fa6']]],
+  ['landuse-toggle', 'Observed land cover', [['Forest and urban green', '#6e9e70'], ['Grassland and pasture', '#a4b77f'], ['Sports and leisure', '#8eb5aa'], ['Industry and infrastructure', '#b9a8a0'], ['Open or unused land', '#c8c4a6'], ['Other mapped cover', '#e5d0b4']]],
+];
+function updateMapLegend(event) {
+  const content = document.querySelector('#map-legend-items');
+  content.replaceChildren();
+  for (const [toggle, title, entries] of legendGroups) {
+    if (!document.querySelector(`#${toggle}`).checked) continue;
+    const visibleEntries = toggle === 'landuse-toggle' && document.querySelector('#land-cover-year').value === '2018'
+      ? entries.filter(([label]) => !['Grassland and pasture', 'Open or unused land'].includes(label)) : entries;
+    const group = document.createElement('div');
+    group.className = 'map-legend__group';
+    const heading = document.createElement('strong');
+    heading.textContent = title;
+    group.append(heading);
+    for (const [label, color, shape] of visibleEntries) {
+      const row = document.createElement('span');
+      const key = document.createElement('i');
+      key.className = `map-legend__key map-legend__key--${shape || 'fill'}`;
+      if (shape === 'line') key.style.borderColor = color;
+      else key.style.backgroundColor = color;
+      row.append(key, document.createTextNode(label));
+      group.append(row);
+    }
+    content.append(group);
+  }
+  if (event?.target?.checked && event.target.id !== 'boundary-toggle') legend.open = true;
+}
+layerPanel.addEventListener('change', updateMapLegend);
+updateMapLegend();
 const map = new maplibregl.Map({
   container: 'map',
   style: 'https://tiles.openfreemap.org/styles/positron',
@@ -235,6 +296,11 @@ map.on('load', async () => {
   map.addLayer({ id: 'tps-study-area', type: 'line', source: 'tps-study-area',
     layout: { visibility: layerVisibility('tps-toggle') },
     paint: { 'line-color': '#a14b73', 'line-width': 3, 'line-dasharray': [3, 2] },
+  }, labelLayer);
+  map.addSource('tps-highlights', { type: 'geojson', data: { type: 'FeatureCollection', features: tpsHighlights.map(({ point, ...properties }) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: point }, properties })) }, attribution: 'ΥΠΕΝ · ΤΠΣ Δ.Ε. Κηφισιάς, τεύχος Α10 (2025)' });
+  map.addLayer({ id: 'tps-highlights', type: 'circle', source: 'tps-highlights',
+    layout: { visibility: layerVisibility('tps-toggle') },
+    paint: { 'circle-radius': 8, 'circle-color': '#a14b73', 'circle-stroke-color': '#fff9e9', 'circle-stroke-width': 2 },
   }, labelLayer);
 
   map.addSource('dsm', {
@@ -608,7 +674,7 @@ async function loadTraffic() {
 document.querySelector('#traffic-toggle').addEventListener('change', loadTraffic);
 setInterval(() => { if (document.querySelector('#traffic-toggle').checked) void loadTraffic(); }, 10 * 60 * 1000);
 
-function selectionDetails(title, detail, note, sourceUrl) {
+function selectionDetails(title, detail, note, sourceUrl, sourceLabel = 'Read source ΦΕΚ ↗') {
   const content = document.createElement('div');
   for (const [tag, className, value] of [['strong', 'selection__title', title], ['p', 'selection__detail', detail], ['p', 'selection__note', note]]) {
     const element = document.createElement(tag);
@@ -621,19 +687,19 @@ function selectionDetails(title, detail, note, sourceUrl) {
     link.href = sourceUrl;
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
-    link.textContent = 'Read source ΦΕΚ ↗';
+    link.textContent = sourceLabel;
     content.append(link);
   }
   return content;
 }
-function showSelection(title, detail, note, sourceUrl) { selection.replaceChildren(selectionDetails(title, detail, note, sourceUrl)); }
+function showSelection(title, detail, note, sourceUrl, sourceLabel) { selection.replaceChildren(selectionDetails(title, detail, note, sourceUrl, sourceLabel)); }
 
 let buildingPopup;
-function showBuilding(event, title, detail, note, sourceUrl) {
-  showSelection(title, detail, note, sourceUrl);
+function showBuilding(event, title, detail, note, sourceUrl, sourceLabel) {
+  showSelection(title, detail, note, sourceUrl, sourceLabel);
   buildingPopup = new maplibregl.Popup({ className: 'building-popup', closeOnClick: false, maxWidth: '260px', offset: 12 })
     .setLngLat(event.lngLat)
-    .setDOMContent(selectionDetails(title, detail, note, sourceUrl))
+    .setDOMContent(selectionDetails(title, detail, note, sourceUrl, sourceLabel))
     .addTo(map);
 }
 
@@ -871,11 +937,15 @@ map.on('click', (event) => {
   buildingPopup?.remove();
   clearBusSelection();
   railPopup?.remove();
-  const layers = ['live-bus-hit', 'live-bus-labels', 'live-bus-icon', 'live-buses', 'municipal-places', 'municipal-closures-points', 'municipal-works-points', 'municipal-works-lines', 'train-model-hit', 'metro-stations', 'bus-network', 'landmarks', 'civic-pois', 'traffic-lights', 'parcels-fill', 'planning-uses', 'designated-spaces', 'forest-status', 'tps-study-area', 'sports', 'canopy-forms-hit', 'building-types', 'copernicus-buildings', 'arch-sites', 'playgrounds', 'parks', 'public-spaces', 'rivers', 'flood-100', 'contours', 'land-cover', 'land-cover-2018', 'bus-stops', 'cycleways-centre', 'kifisia-buildings'].filter((id) => map.getLayer(id));
+  const layers = ['tps-highlights', 'live-bus-hit', 'live-bus-labels', 'live-bus-icon', 'live-buses', 'municipal-places', 'municipal-closures-points', 'municipal-works-points', 'municipal-works-lines', 'train-model-hit', 'metro-stations', 'bus-network', 'landmarks', 'civic-pois', 'traffic-lights', 'parcels-fill', 'planning-uses', 'designated-spaces', 'forest-status', 'tps-study-area', 'sports', 'canopy-forms-hit', 'building-types', 'copernicus-buildings', 'arch-sites', 'playgrounds', 'parks', 'public-spaces', 'rivers', 'flood-100', 'contours', 'land-cover', 'land-cover-2018', 'bus-stops', 'cycleways-centre', 'kifisia-buildings'].filter((id) => map.getLayer(id));
   const hits = map.queryRenderedFeatures(event.point, { layers });
   const feature = layers.map((id) => hits.find((hit) => hit.layer.id === id)).find(Boolean);
   if (!feature) return;
-  if (feature.layer.id === 'municipal-places') {
+  if (feature.layer.id === 'tps-highlights') {
+    const scenario = document.querySelector('#tps-map-scenario').value;
+    showBuilding(event, `Scenario ${scenario}: ${feature.properties.name}`, feature.properties[`desc${scenario}`],
+      'Indicative location of a proposal, not a precise boundary. Consult the official study drawing.', tpsStudyUrl, 'Read official scenario study ↗');
+  } else if (feature.layer.id === 'municipal-places') {
     showBuilding(event, feature.properties.name, feature.properties.category,
       'Municipality of Kifisia · published facility point. Check the municipal source for current access and activities.');
   } else if (feature.layer.id.startsWith('municipal-')) {
@@ -950,6 +1020,8 @@ map.on('click', (event) => {
 
 map.on('mouseenter', 'kifisia-buildings', () => { map.getCanvas().style.cursor = 'pointer'; });
 map.on('mouseleave', 'kifisia-buildings', () => { map.getCanvas().style.cursor = ''; });
+map.on('mouseenter', 'tps-highlights', () => { map.getCanvas().style.cursor = 'pointer'; });
+map.on('mouseleave', 'tps-highlights', () => { map.getCanvas().style.cursor = ''; });
 
 document.querySelectorAll('.place').forEach((button) => {
   button.addEventListener('click', () => {
@@ -1025,7 +1097,6 @@ document.querySelector('#greenery-toggle').addEventListener('change', (event) =>
 document.querySelector('#basemap-select').addEventListener('change', (event) => {
   const satellite = event.target.value === 'satellite';
   if (map.getLayer('satellite')) map.setLayoutProperty('satellite', 'visibility', satellite ? 'visible' : 'none');
-  document.querySelector('#imagery-credit').hidden = !satellite;
 });
 
 document.querySelector('#boundary-toggle').addEventListener('change', (event) => {
@@ -1038,7 +1109,7 @@ for (const [input, layers] of [
   ['trees-toggle', ['tree-cover']], ['ndvi-toggle', ['ndvi']], ['roads-toggle', ['main-roads']],
   ['bike-toggle', ['cycleways', 'cycleways-centre']], ['stops-toggle', ['bus-stops']],
   ['planning-toggle', ['planning-uses']], ['designated-toggle', ['designated-spaces']],
-  ['forest-toggle', ['forest-status']], ['tps-toggle', ['tps-study-area']],
+  ['forest-toggle', ['forest-status']], ['tps-toggle', ['tps-study-area', 'tps-highlights']],
   ['dsm-toggle', ['dsm']], ['contours-toggle', ['contours']],
   ['flood-toggle', ['flood-100']], ['sports-toggle', ['sports']],
   ['parks-toggle', ['parks']], ['public-toggle', ['public-spaces']], ['playgrounds-toggle', ['playgrounds']], ['heritage-toggle', ['arch-sites']],
@@ -1058,14 +1129,31 @@ function updateLandCoverYear() {
 }
 document.querySelector('#landuse-toggle').addEventListener('change', updateLandCoverYear);
 document.querySelector('#land-cover-year').addEventListener('change', updateLandCoverYear);
+document.querySelector('#land-cover-year').addEventListener('change', updateMapLegend);
 const tpsDialog = document.querySelector('#tps-dialog');
 const tpsScenario = document.querySelector('#tps-scenario');
+const tpsMapScenario = document.querySelector('#tps-map-scenario');
 const tpsImage = document.querySelector('#tps-image');
 const tpsImageZoom = document.querySelector('#tps-image-zoom');
 function showTps() {
+  tpsScenario.value = tpsMapScenario.value;
   tpsImage.src = `${import.meta.env.BASE_URL}data/kifisia-tps-scenario-${tpsScenario.value}.jpg`;
   tpsDialog.showModal();
 }
+document.querySelector('#tps-toggle').addEventListener('change', (event) => {
+  document.querySelector('#tps-controls').hidden = !event.target.checked;
+  buildingPopup?.remove();
+  if (event.target.checked) map.fitBounds([[23.7674, 38.0606], [23.8841, 38.1081]], { padding: 48, pitch: 0, bearing: 0, duration: 900 });
+});
+function clearTpsSelection() {
+  buildingPopup?.remove();
+  selection.replaceChildren();
+  const prompt = document.createElement('p');
+  prompt.className = 'selection__empty';
+  prompt.textContent = 'Select a purple marker to compare the scenario at that location.';
+  selection.append(prompt);
+}
+tpsMapScenario.addEventListener('change', clearTpsSelection);
 document.querySelector('#tps-view-button').addEventListener('click', showTps);
 document.querySelector('#tps-close').addEventListener('click', () => tpsDialog.close());
 tpsImageZoom.addEventListener('click', () => {
@@ -1073,7 +1161,11 @@ tpsImageZoom.addEventListener('click', () => {
   tpsImageZoom.setAttribute('aria-pressed', String(enlarged));
   tpsImageZoom.textContent = enlarged ? 'Fit drawing to screen' : 'Enlarge drawing';
 });
-tpsScenario.addEventListener('change', () => { tpsImage.src = `${import.meta.env.BASE_URL}data/kifisia-tps-scenario-${tpsScenario.value}.jpg`; });
+tpsScenario.addEventListener('change', () => {
+  tpsMapScenario.value = tpsScenario.value;
+  tpsImage.src = `${import.meta.env.BASE_URL}data/kifisia-tps-scenario-${tpsScenario.value}.jpg`;
+  clearTpsSelection();
+});
 document.querySelector('#tps-dialog').addEventListener('click', (event) => { if (event.target === tpsDialog) tpsDialog.close(); });
 for (const [input, other, layer] of [['ndvi-toggle', 'trees-toggle', 'tree-cover'], ['trees-toggle', 'ndvi-toggle', 'ndvi']]) {
   document.querySelector(`#${input}`).addEventListener('change', (event) => {
