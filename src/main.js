@@ -6,6 +6,7 @@ import { railPath, estimatedTrains } from './rail-estimates.js';
 import { createTrafficLayer } from './traffic-layer.js';
 import { setupSunPreview } from './sun-preview.js';
 import { sportsCategories, civicCategories, categoryFilter } from './category-filters.js';
+import { createBasemapLabelStyler } from './basemap-labels.js';
 import { initI18n } from './i18n.js';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -21,11 +22,11 @@ initI18n();
 const themeToggle = document.querySelector('#theme-toggle');
 function setTheme(theme) {
   document.documentElement.dataset.theme = theme;
-  themeToggle.textContent = theme === 'dark' ? 'Light mode' : 'Dark mode';
+  themeToggle.checked = theme === 'dark';
   localStorage.setItem('kifisia-theme', theme);
 }
 setTheme(localStorage.getItem('kifisia-theme') === 'dark' ? 'dark' : 'light');
-themeToggle.addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+themeToggle.addEventListener('change', () => setTheme(themeToggle.checked ? 'dark' : 'light'));
 
 const places = {
   kifisia: [23.8082244, 38.0736082],
@@ -308,6 +309,7 @@ const map = new maplibregl.Map({
   attributionControl: false,
   canvasContextAttributes: { antialias: !matchMedia('(pointer: coarse)').matches },
 });
+let updateBasemapLabels;
 
 const mobileLayersButton = document.querySelector('#mobile-layers-toggle');
 mobileLayersButton.addEventListener('click', () => {
@@ -353,6 +355,8 @@ if (matchMedia('(pointer: coarse)').matches) {
 }
 
 map.on('load', async () => {
+  updateBasemapLabels = createBasemapLabelStyler(map);
+  updateBasemapLabels(document.querySelector('#basemap-select').value === 'satellite');
   map.setPaintProperty('park', 'fill-color', '#b6cbb0');
   map.setPaintProperty('landcover_wood', 'fill-color', '#a9c2a8');
   const labelLayer = map.getStyle().layers.find((layer) => layer.type === 'symbol')?.id;
@@ -1243,6 +1247,7 @@ document.querySelector('#greenery-toggle').addEventListener('change', (event) =>
 document.querySelector('#basemap-select').addEventListener('change', (event) => {
   const satellite = event.target.value === 'satellite';
   if (map.getLayer('satellite')) map.setLayoutProperty('satellite', 'visibility', satellite ? 'visible' : 'none');
+  updateBasemapLabels?.(satellite);
 });
 
 document.querySelector('#boundary-toggle').addEventListener('change', (event) => {

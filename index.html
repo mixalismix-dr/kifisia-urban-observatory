@@ -17,7 +17,10 @@
             <h1>Kifisia<span>Urban Observatory</span></h1>
           </div>
           <button class="mobile-layers-toggle" id="mobile-layers-toggle" type="button" aria-controls="sidebar-body" aria-expanded="false">Layers</button>
-          <label class="language-choice" for="language-select"><span>Γλώσσα / Language</span><select id="language-select" aria-label="Γλώσσα / Language"><option value="el">Ελληνικά</option><option value="en">English</option></select></label>
+          <div class="identity__controls">
+            <label class="language-choice" for="language-select"><span>Γλώσσα / Language</span><select id="language-select" aria-label="Γλώσσα / Language"><option value="el">Ελληνικά</option><option value="en">English</option></select></label>
+            <label class="theme-switch"><span>Light</span><input id="theme-toggle" type="checkbox" role="switch" aria-label="Dark mode" /><span class="theme-switch__track" aria-hidden="true"></span><span>Dark</span></label>
+          </div>
         </header>
 
         <div class="sidebar__body" id="sidebar-body">
@@ -163,7 +166,6 @@
             <div class="section__head"><span>03</span><h2 id="selection-heading">Inspect</h2></div>
             <div id="selection-content"><p class="selection__empty">Select a mapped feature to see its details and source.</p></div>
           </section>
-          <details class="appearance-settings"><summary>Appearance</summary><button id="theme-toggle" type="button">Dark mode</button></details>
         </div>
 
       </aside>
