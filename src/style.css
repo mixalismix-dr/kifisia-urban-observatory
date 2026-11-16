@@ -202,15 +202,17 @@ h2 { font-size: 13px; letter-spacing: .01em; margin: 0; font-weight: 700; }
   @keyframes popup-enter { from { opacity: 0; translate: 0 5px; } to { opacity: 1; translate: 0 0; } }
   @keyframes popup-tip-enter { from { opacity: 0; } to { opacity: 1; } }
 }
-.route-popup .maplibregl-popup-content { display: flex; flex-direction: column; width: min(320px, 76vw); max-height: min(330px, calc(100dvh - 24px)); overflow: auto; padding: 14px; border: 1px solid #aebcae; border-radius: 10px; background: #f8f6ec; color: #20362c; box-shadow: 0 7px 24px #18322640; }
+.route-popup .maplibregl-popup-content { display: flex; flex-direction: column; width: min(320px, 76vw); max-height: min(420px, 52dvh); overflow: auto; padding: 14px; border: 1px solid #aebcae; border-radius: 10px; background: #f8f6ec; color: #20362c; box-shadow: 0 7px 24px #18322640; }
 .route-popup .maplibregl-popup-close-button { color: #476454; font-size: 18px; padding: 2px 7px; }
 .route-popup__trip, .route-popup__next { margin: 7px 0; font-size: 12px; line-height: 1.4; }
 .route-popup__next { color: #176a89; font-weight: 700; }
-.route-popup__stops { min-height: 65px; max-height: min(90px, 16dvh); overflow: auto; margin: 10px 0; padding-left: 25px; border-top: 1px solid #d7dfd4; border-bottom: 1px solid #d7dfd4; font-size: 12px; line-height: 1.6; }
+.route-popup__stops { min-height: 65px; max-height: min(130px, 16dvh); overflow: auto; margin: 10px 0; padding-left: 25px; border-top: 1px solid #d7dfd4; border-bottom: 1px solid #d7dfd4; font-size: 12px; line-height: 1.6; }
 .route-popup__stops li { padding: 2px 4px; }
 .route-popup__stops li:has(.route-popup__eta) { position: relative; padding-right: 62px; }
 .route-popup__eta { position: absolute; right: 4px; top: 2px; color: #176a89; font-weight: 700; white-space: nowrap; }
+.route-popup__eta-status { margin: 2px 0 7px; color: #586b60; font-size: 11px; line-height: 1.35; }
 [data-theme="dark"] .route-popup__eta, [data-theme="dark"] .route-popup__next { color: #9bd7e9; }
+[data-theme="dark"] .route-popup__eta-status { color: #bbcec0; }
 .rail-popup .route-popup__stops { max-height: min(125px, 19dvh); }
 .route-popup__passed { color: #8a968b; }
 .route-popup__current { color: #176a89; background: #dcecf0; font-weight: 700; }
