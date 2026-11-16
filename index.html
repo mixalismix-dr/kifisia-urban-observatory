@@ -27,7 +27,6 @@
 
           <section class="section" aria-labelledby="layers-heading">
             <div class="section__head"><span>01</span><h2 id="layers-heading">Map layers</h2></div>
-            <label class="basemap-choice" for="basemap-select">Base map <select id="basemap-select"><option value="street">Street map</option><option value="satellite" selected>Satellite imagery</option></select></label>
             <details class="layer-group">
               <summary>Built environment<small class="layer-group__count"></small></summary>
               <label class="layer"><span><i class="swatch swatch--built"></i>3D buildings</span><input id="buildings-toggle" type="checkbox" checked /><span class="switch" aria-hidden="true"></span></label>
@@ -122,11 +121,13 @@
               <label class="layer"><span><i class="swatch swatch--heritage"></i>Historic sites <small>5</small></span><input id="heritage-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <label class="layer"><span><i class="swatch swatch--playgrounds"></i>Playgrounds <small>21</small></span><input id="playgrounds-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <label class="layer"><span><i class="swatch swatch--sports"></i>Sports sites <small>167</small></span><input id="sports-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+              <label class="basemap-choice category-filter" id="sports-filter-wrap" for="sports-filter" hidden>Sport <select id="sports-filter"><option value="all">All sports</option><option value="tennis">Tennis</option><option value="basketball">Basketball</option><option value="soccer">Football</option><option value="other">Other tagged sports</option><option value="unspecified">Sport not specified</option></select></label>
               <p class="layer-note">OSM · 26 Oct 2026 · mapped pitches, stadiums, tracks and sports centers. Private pools excluded. <a href="https://kifissia.gr/ypodomes-ston-athlitismo/" target="_blank" rel="noopener noreferrer">Municipal facilities list ↗</a></p>
               <label class="layer"><span><i class="swatch swatch--municipal-places"></i>Municipal playgrounds &amp; sports <small>57</small></span><input id="municipal-places-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
               <p class="layer-note" id="municipal-places-status">Municipality of Kifisia · published facility points · switch on to load</p>
               <p class="layer-note"><a href="https://kifissia.gr/paidikes-chares-choroi-athlisis/" target="_blank" rel="noopener noreferrer">Municipal facilities source ↗</a></p>
               <label class="layer"><span><i class="swatch swatch--civic"></i>Schools &amp; services <small>80</small></span><input id="civic-toggle" type="checkbox" /><span class="switch" aria-hidden="true"></span></label>
+              <label class="basemap-choice category-filter" id="civic-filter-wrap" for="civic-filter" hidden>Type <select id="civic-filter"><option value="all">All schools &amp; services</option><option value="School">Schools</option><option value="Hospital">Hospitals</option><option value="public">Police &amp; municipal office</option><option value="culture">Cinemas &amp; theatre</option></select></label>
               <p class="layer-note">Athens GIS / OSM snapshot · 25 Oct 2026. Select a feature for details.</p>
             </details>
           </section>
@@ -181,7 +182,7 @@
         </article>
         <div class="map-status" id="map-status" role="status">Loading map…</div>
         <button class="reset-view" id="reset-view" type="button" aria-label="Show the whole municipality">↗ <span>Whole municipality</span></button>
-        <details class="map-legend" id="map-legend" open><summary>Map legend</summary><div id="map-legend-items"></div></details>
+        <details class="map-legend" id="map-legend" open><summary>Map legend</summary><div id="map-legend-items"></div><div class="map-legend__basemaps"><strong>Base layers</strong><label for="basemap-select">Base map <select id="basemap-select"><option value="street">OpenFreeMap · Streets</option><option value="satellite" selected>Esri · World Imagery</option></select></label></div></details>
         <template id="type-legend-template"><div class="type-key" aria-label="Building type colors"><span><i style="background:#b88272"></i>Residential</span><span><i style="background:#627fa2"></i>Civic &amp; health</span><span><i style="background:#c49b4a"></i>Business</span><span><i style="background:#9a77a8"></i>Worship</span><span><i style="background:#848f91"></i>Industrial</span><span><i style="background:#8ca6a0"></i>Ancillary</span></div></template>
         <template id="ndvi-legend-template"><div class="ndvi-key" aria-label="NDVI color scale from minus 0.2 to 1"><span>−0.2</span><i></i><span>1.0</span></div></template>
         <template id="density-legend-template"><div class="density-key" aria-label="Tree cover color scale from 1 to 100 percent"><span>1%</span><i></i><span>100%</span></div></template>

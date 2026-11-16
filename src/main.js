@@ -5,6 +5,7 @@ import { createTrainLayer } from './train-layer.js';
 import { railPath, estimatedTrains } from './rail-estimates.js';
 import { createTrafficLayer } from './traffic-layer.js';
 import { setupSunPreview } from './sun-preview.js';
+import { sportsCategories, civicCategories, categoryFilter } from './category-filters.js';
 import { initI18n } from './i18n.js';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -16,7 +17,6 @@ const legendLabels = Object.fromEntries([...document.querySelectorAll('.layer in
   label.querySelector('small')?.remove();
   return [input.id, label.textContent.trim()];
 }));
-const baseMapLabels = Object.fromEntries([...document.querySelectorAll('#basemap-select option')].map((option) => [option.value, option.textContent]));
 initI18n();
 
 const places = {
@@ -145,6 +145,61 @@ updateLayerCounts();
 const legend = document.querySelector('#map-legend');
 if (matchMedia('(max-width: 760px)').matches) legend.open = false;
 const legendTemplates = { 'types-toggle': 'type-legend-template', 'trees-toggle': 'density-legend-template', 'ndvi-toggle': 'ndvi-legend-template' };
+const legendSources = {
+  'buildings-toggle': () => document.querySelector('#height-source').value === 'copernicus' ? 'OpenStreetMap / Copernicus Urban Atlas 2021' : 'OpenFreeMap / OpenStreetMap', 'sun-toggle': 'OpenStreetMap / Copernicus Urban Atlas 2021',
+  'types-toggle': 'OpenStreetMap · 2026', 'boundary-toggle': 'OpenStreetMap · 2026',
+  'parcels-toggle': 'Hellenic Cadastre · 2026', 'planning-toggle': 'TEE Unified Digital Map',
+  'designated-toggle': 'TEE Unified Digital Map', 'forest-toggle': 'Hellenic Cadastre · 2021',
+  'tps-toggle': 'ΥΠΕΝ · ΤΠΣ 2025', 'landuse-toggle': () => document.querySelector('#land-cover-year').value === '2021' ? 'Copernicus Urban Atlas 2021' : 'Copernicus CORINE 2018',
+  'trees-toggle': 'Copernicus Tree Cover Density 2024', 'ndvi-toggle': 'Sentinel-2 · 11 Sep 2026',
+  'greenery-toggle': 'Meta / WRI CHMv2 · Copernicus 2024', 'parks-toggle': 'Athens GIS',
+  'public-toggle': 'Athens GIS', 'dsm-toggle': 'Copernicus DEM GLO-30',
+  'contours-toggle': 'Copernicus DEM GLO-30', 'water-toggle': 'Athens GIS',
+  'flood-toggle': 'Attica Water Directorate', 'roads-toggle': 'OpenStreetMap',
+  'traffic-toggle': 'Attica Traffic Police / OpenStreetMap', 'works-toggle': 'Municipality of Kifisia',
+  'closures-toggle': 'Municipality of Kifisia', 'bike-toggle': 'OpenStreetMap',
+  'signals-toggle': 'Athens GIS', 'walking-toggle': 'OpenStreetMap',
+  'stops-toggle': 'OASA / Athens GIS', 'buses-toggle': 'OASA · community feed',
+  'metro-toggle': 'STASY / Athens GIS', 'landmarks-toggle': 'Municipality of Kifisia / OpenStreetMap',
+  'heritage-toggle': 'Athens GIS', 'playgrounds-toggle': 'Athens GIS',
+  'sports-toggle': 'OpenStreetMap · 2026', 'municipal-places-toggle': 'Municipality of Kifisia',
+  'civic-toggle': 'Athens GIS / OpenStreetMap',
+};
+function appendLegendSource(group, source, control) {
+  const layerId = control.id || control.querySelector('input')?.id;
+  const heading = group.querySelector('strong');
+  heading.id = `legend-${layerId}-heading`;
+  const credit = document.createElement('div');
+  credit.className = 'map-legend__source';
+  const caption = document.createElement('span');
+  caption.textContent = 'Source:';
+  credit.append(caption, document.createTextNode(` ${source}`));
+  const info = document.createElement('button');
+  info.type = 'button';
+  info.className = 'map-legend__info';
+  info.id = `legend-${layerId}-info`;
+  info.setAttribute('aria-labelledby', `${info.id} ${heading.id}`);
+  info.textContent = 'More information';
+  info.addEventListener('click', () => {
+    if (matchMedia('(max-width: 760px)').matches && !document.querySelector('.app').classList.contains('layers-open')) document.querySelector('#mobile-layers-toggle').click();
+    const target = control.closest('.layer-group');
+    if (target) target.open = true;
+    requestAnimationFrame(() => control.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+  });
+  group.append(credit, info);
+}
+const opacityControls = {
+  'planning-toggle': [['planning-uses'], 'fill-opacity', 0.57],
+  'designated-toggle': [['designated-spaces'], 'fill-opacity', 0.6],
+  'forest-toggle': [['forest-status'], 'fill-opacity', 0.62],
+  'flood-toggle': [['flood-100'], 'fill-opacity', 0.38],
+  'landuse-toggle': [['land-cover', 'land-cover-2018'], 'fill-opacity', 0.66],
+  'trees-toggle': [['tree-cover'], 'raster-opacity', 0.72],
+  'ndvi-toggle': [['ndvi'], 'raster-opacity', 0.78],
+  'dsm-toggle': [['dsm'], 'raster-opacity', 0.67],
+  'sports-toggle': [['sports'], 'fill-opacity', 0.72],
+};
+const transparency = Object.fromEntries(Object.entries(opacityControls).map(([toggle, [, , opacity]]) => [toggle, Math.round(100 * (1 - opacity))]));
 const legendGroups = [
   ['boundary-toggle', 'Municipal boundary', [['Municipal boundary', '#254d3d', 'line']]],
   ['tps-toggle', 'Local plan proposals', [['Study area · Kifisia Municipal Unit', '#a14b73', 'line'], ['Indicative proposal location · select for details', '#a14b73', 'point']]],
@@ -153,26 +208,30 @@ const legendGroups = [
   ['forest-toggle', 'Partly ratified forest map', [['ΔΔ · forest in both periods', '#27774c'], ['ΔΑ · forest in the past', '#bd7656'], ['ΑΔ · forest recently', '#83a65a'], ['ΑΑ · other cover in both periods', '#d9c59e'], ['ΠΑ · final non-forest designation', '#b8aaa1']]],
   ['flood-toggle', '100-year flood zone', [['Modeled 100-year flood extent', '#277fa6']]],
   ['landuse-toggle', 'Observed land cover', [['Forest and urban green', '#6e9e70'], ['Grassland and pasture', '#a4b77f'], ['Sports and leisure', '#8eb5aa'], ['Industry and infrastructure', '#b9a8a0'], ['Open or unused land', '#c8c4a6'], ['Other mapped cover', '#e5d0b4']]],
+  ['sports-toggle', 'Sports sites', sportsCategories.map(([, label, color]) => [label, color])],
+  ['civic-toggle', 'Schools & services', civicCategories.map(([, label, color]) => [label, color, 'point'])],
 ];
 function updateMapLegend(event) {
   const content = document.querySelector('#map-legend-items');
   content.replaceChildren();
-  const base = document.createElement('div');
-  base.className = 'map-legend__group';
-  const baseTitle = document.createElement('strong');
-  baseTitle.textContent = 'Base map';
-  const baseName = document.createElement('span');
-  baseName.textContent = baseMapLabels[document.querySelector('#basemap-select').value];
-  base.append(baseTitle, baseName);
-  content.append(base);
   for (const input of layerPanel.querySelectorAll('.layer input[type="checkbox"]:checked')) {
     const [toggle, title, entries] = legendGroups.find(([id]) => id === input.id) || [input.id, legendLabels[input.id], null];
-    const visibleEntries = toggle === 'landuse-toggle' && document.querySelector('#land-cover-year').value === '2018'
+    let visibleEntries = toggle === 'landuse-toggle' && document.querySelector('#land-cover-year').value === '2018'
       ? entries.filter(([label]) => !['Grassland and pasture', 'Open or unused land'].includes(label)) : entries;
+    let selectedCategory;
+    if (toggle === 'sports-toggle' || toggle === 'civic-toggle') {
+      const value = document.querySelector(toggle === 'sports-toggle' ? '#sports-filter' : '#civic-filter').value;
+      const categories = toggle === 'sports-toggle' ? sportsCategories : civicCategories;
+      if (value !== 'all') {
+        selectedCategory = categories.find(([key]) => key === value)?.[1];
+        visibleEntries = visibleEntries.filter(([label]) => label === selectedCategory);
+      }
+    }
     const group = document.createElement('div');
     group.className = 'map-legend__group';
     const heading = document.createElement('strong');
     heading.textContent = title;
+    if (selectedCategory) heading.append(document.createTextNode(' · '), document.createTextNode(selectedCategory));
     if (!entries && !legendTemplates[toggle]) heading.prepend(input.closest('label').querySelector('.swatch').cloneNode(true));
     group.append(heading);
     if (legendTemplates[toggle]) group.append(document.querySelector(`#${legendTemplates[toggle]}`).content.cloneNode(true));
@@ -185,6 +244,26 @@ function updateMapLegend(event) {
       row.append(key, document.createTextNode(label));
       group.append(row);
     }
+    if (opacityControls[toggle]) {
+      const control = document.createElement('label');
+      control.className = 'map-legend__transparency';
+      const caption = document.createElement('span');
+      caption.textContent = 'Transparency';
+      const output = document.createElement('output');
+      output.textContent = `${transparency[toggle]}%`;
+      const slider = document.createElement('input');
+      Object.assign(slider, { type: 'range', min: '0', max: '100', value: String(transparency[toggle]) });
+      slider.addEventListener('input', () => {
+        transparency[toggle] = Number(slider.value);
+        output.textContent = `${slider.value}%`;
+        const [layers, property] = opacityControls[toggle];
+        for (const layer of layers) if (map.getLayer(layer)) map.setPaintProperty(layer, property, 1 - transparency[toggle] / 100);
+      });
+      control.append(caption, output, slider);
+      group.append(control);
+    }
+    const source = legendSources[toggle];
+    if (source) appendLegendSource(group, typeof source === 'function' ? source() : source, input.closest('label'));
     content.append(group);
   }
   for (const [buttonId, title, label, color] of [
@@ -202,6 +281,8 @@ function updateMapLegend(event) {
     key.style.borderColor = color;
     row.append(key, document.createTextNode(label));
     group.append(heading, row);
+    const source = buttonId === 'bus-network-button' ? 'OASA GTFS · 2026' : 'Athens GIS / STASY';
+    appendLegendSource(group, source, document.querySelector(`#${buttonId}`));
     content.append(group);
   }
   if (event?.target?.checked || event?.target?.getAttribute('aria-pressed') === 'true' || event?.target?.id === 'basemap-select') legend.open = true;
@@ -388,7 +469,7 @@ map.on('load', async () => {
   }, 'kifisia-buildings');
 
   for (const [name, toggle, type, paint] of [
-    ['sports', 'sports-toggle', 'fill', { 'fill-color': '#b86a53', 'fill-opacity': 0.72, 'fill-outline-color': '#713e38' }],
+    ['sports', 'sports-toggle', 'fill', { 'fill-color': ['case', ['==', ['get', 'sport'], null], '#8d928a', ['match', ['get', 'sport'], 'tennis', '#b86a53', 'basketball', '#c5963f', 'soccer', '#56856b', '#8f7187']], 'fill-opacity': 0.72, 'fill-outline-color': '#713e38' }],
     ['parks', 'parks-toggle', 'fill', { 'fill-color': '#4d9868', 'fill-opacity': 0.46, 'fill-outline-color': '#25704d' }],
     ['public-spaces', 'public-toggle', 'fill', { 'fill-color': ['match', ['get', 'category'], 'Park', '#4d9868', 'Playground', '#dca953', '#86a97e'], 'fill-opacity': 0.42, 'fill-outline-color': '#37654b' }],
     ['playgrounds', 'playgrounds-toggle', 'fill', { 'fill-color': '#dca953', 'fill-opacity': 0.75, 'fill-outline-color': '#a66a21' }],
@@ -404,7 +485,7 @@ map.on('load', async () => {
   map.addLayer({ id: 'parcels-outline', type: 'line', source: 'parcels', minzoom: 16,
     layout: { visibility: layerVisibility('parcels-toggle') }, paint: { 'line-color': '#765d8d', 'line-width': 1.2, 'line-opacity': 0.8 } }, labelLayer);
   for (const [name, toggle, color, radius] of [
-    ['civic-pois', 'civic-toggle', '#4d5e81', 5],
+    ['civic-pois', 'civic-toggle', ['match', ['get', 'category'], 'School', '#4d5e81', 'Hospital', '#aa6570', ['Police', 'Municipal office'], '#82715d', ['Cinema', 'Theatre'], '#8d739d', '#4d5e81'], 5],
     ['landmarks', 'landmarks-toggle', '#9b5471', 7],
   ]) {
     map.addSource(name, { type: 'geojson', data: localData(name), attribution: 'Athens GIS / OpenStreetMap contributors' });
@@ -1177,6 +1258,21 @@ for (const [input, layers] of [
     for (const layer of layers) if (map.getLayer(layer)) map.setLayoutProperty(layer, 'visibility', event.target.checked ? 'visible' : 'none');
   });
 }
+function updateCategoryFilter(layer, selectId) {
+  if (!map.getLayer(layer)) return;
+  const value = document.querySelector(`#${selectId}`).value;
+  map.setFilter(layer, categoryFilter(layer, value));
+}
+for (const [toggle, select, layer] of [['sports-toggle', 'sports-filter', 'sports'], ['civic-toggle', 'civic-filter', 'civic-pois']]) {
+  const input = document.querySelector(`#${toggle}`);
+  const picker = document.querySelector(`#${select}`);
+  input.addEventListener('change', () => { picker.closest('.category-filter').hidden = !input.checked; });
+  picker.addEventListener('change', () => updateCategoryFilter(layer, select));
+}
+map.on('load', () => {
+  updateCategoryFilter('sports', 'sports-filter');
+  updateCategoryFilter('civic-pois', 'civic-filter');
+});
 function updateLandCoverYear() {
   for (const year of ['2018', '2021']) {
     const layer = year === '2021' ? 'land-cover' : 'land-cover-2018';
